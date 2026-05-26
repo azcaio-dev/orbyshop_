@@ -31,8 +31,11 @@ function useStore() {
         const storeSnap = await getDoc(storeRef)
 
         if (storeSnap.exists()) {
-          setStore(storeSnap.data())
-        } else {
+          setStore({
+            plan: 'basic',
+            ...storeSnap.data(),
+          })        
+          } else {
           console.warn('Loja não encontrada:', storeSlug)
           setStore(null)
         }

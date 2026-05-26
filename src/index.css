@@ -3290,3 +3290,1745 @@ button:hover {
   border-radius: 12px;
   object-fit: cover;
 }
+/* ─── ORBY ADMIN — LAYOUT SHELL ─────────────────────────────── */
+
+.admin-mobile-menu-button {
+  display: none;
+}
+
+.admin-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #f6f7fb;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+
+.admin-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  height: 100%;
+  background: #ffffff;
+  border-right: 0.5px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  overflow: hidden;
+  z-index: 1300;
+}
+
+.admin-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 20px;
+  border-bottom: 0.5px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+
+.admin-sidebar-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.admin-sidebar-close {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+}
+
+.admin-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+}
+
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  text-decoration: none;
+  position: relative;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-sidebar-link i {
+  font-size: 17px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.admin-sidebar-link-label {
+  flex: 1;
+}
+
+.admin-sidebar-link:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.admin-sidebar-link.active {
+  background: #eeedfe;
+  color: #534ab7;
+  font-weight: 500;
+}
+
+.admin-sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: #7f77dd;
+  border-radius: 0 3px 3px 0;
+}
+
+.admin-sidebar-pro {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: #7f77dd;
+  color: #ffffff;
+}
+
+.admin-sidebar-footer {
+  margin-top: auto;
+  padding: 16px 16px 0;
+  border-top: 0.5px solid #e5e7eb;
+}
+
+.admin-sidebar-store-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.admin-sidebar-store-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1d9e75;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-store-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-sidebar-store-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sidebar-store-plan {
+  font-size: 11px;
+  color: #0f6e56;
+}
+
+/* ─── ÁREA DIREITA ───────────────────────────────────────────── */
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.orby-header {
+  flex-shrink: 0;
+  position: relative !important;
+  top: auto !important;
+}
+
+.admin-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ─── OVERLAY MOBILE ─────────────────────────────────────────── */
+
+.admin-sidebar-overlay {
+  display: none;
+}
+
+/* ─── DASHBOARD CONTENT ──────────────────────────────────────── */
+
+.dash-content {
+  padding: 28px 32px;
+}
+
+.dash-loading {
+  padding: 40px 32px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dash-page-header {
+  margin-bottom: 24px;
+}
+
+.dash-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.dash-page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dash-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dash-metric-card {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.dash-metric-accent {
+  background: #eeedfe;
+  border-color: #afa9ec;
+}
+
+.dash-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.dash-metric-accent .dash-metric-label {
+  color: #534ab7;
+}
+
+.dash-metric-label i {
+  font-size: 14px;
+}
+
+.dash-metric-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-metric-accent .dash-metric-value {
+  color: #3c3489;
+}
+
+.dash-metric-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.dash-metric-accent .dash-metric-sub {
+  color: #534ab7;
+}
+
+.dash-metric-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #854f0b;
+  background: #faeeda;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+
+.dash-metric-warn i {
+  font-size: 11px;
+}
+
+.dash-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px;
+}
+
+.dash-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.dash-quick-card {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.dash-quick-card:hover {
+  border-color: #afa9ec;
+  background: #f9f8ff;
+  transform: translateY(-1px);
+}
+
+.dash-quick-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #eeedfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #534ab7;
+  font-size: 16px;
+}
+
+.dash-quick-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-quick-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.dash-sales-section {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.dash-sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dash-sales-count {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.dash-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  gap: 10px;
+  color: #9ca3af;
+}
+
+.dash-empty i {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.dash-empty p {
+  font-size: 13px;
+  margin: 0;
+}
+
+.dash-sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dash-sales-table thead tr {
+  border-bottom: 0.5px solid #e5e7eb;
+}
+
+.dash-sales-table th {
+  text-align: left;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 0 12px 10px 0;
+  font-size: 12px;
+}
+
+.dash-sales-table td {
+  padding: 10px 12px 10px 0;
+  color: #111827;
+  border-bottom: 0.5px solid #f3f4f6;
+}
+
+.dash-sales-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dash-sale-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dash-sale-badge--active {
+  background: #e1f5ee;
+  color: #0f6e56;
+}
+
+.dash-sale-badge--canceled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ─── MOBILE ─────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .admin-mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 64px;
+    left: 16px;
+    z-index: 1200;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    background: #7f77dd;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: -240px;
+    transition: left 0.28s ease;
+  }
+
+  .admin-sidebar.open {
+    left: 0;
+  }
+
+  .admin-sidebar-close {
+    display: block;
+  }
+
+  .admin-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1200;
+  }
+
+  .dash-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-content {
+    padding: 20px 16px;
+  }
+
+  .dash-sales-table th:nth-child(3),
+  .dash-sales-table td:nth-child(3),
+  .dash-sales-table th:nth-child(4),
+  .dash-sales-table td:nth-child(4) {
+    display: none;
+  }
+}
+
+/* ─── FILTROS DE DATA ────────────────────────────────────────── */
+
+.sales-date-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.sales-date-filters input[type="date"] {
+  padding: 8px 12px;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.sales-date-filters input[type="date"]:focus {
+  border-color: #7f77dd;
+  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.12);
+}
+
+/* ─── INPUTS DE ESTOQUE ──────────────────────────────────────── */
+
+.size-stock-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px;
+  background: #f9f8ff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.size-stock-box p {
+  font-size: 12px;
+  font-weight: 600;
+  color: #534ab7;
+  margin: 0 0 4px;
+}
+
+.size-stock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.size-stock-row label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 32px;
+}
+
+.size-stock-row input[type="number"] {
+  flex: 1;
+  padding: 7px 10px;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.size-stock-row input[type="number"]:focus {
+  border-color: #7f77dd;
+  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.12);
+}
+
+.variation-stock-group {
+  padding: 10px;
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variation-stock-group strong {
+  font-size: 12px;
+  color: #534ab7;
+}
+
+/* ─── ORBY ADMIN — LAYOUT SHELL ─────────────────────────────── */
+
+.admin-mobile-menu-button {
+  display: none;
+}
+
+.admin-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #f6f7fb;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+
+.admin-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  height: 100%;
+  background: #ffffff;
+  border-right: 0.5px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  overflow: hidden;
+  z-index: 1300;
+}
+
+.admin-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 20px;
+  border-bottom: 0.5px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+
+.admin-sidebar-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.admin-sidebar-close {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+}
+
+.admin-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+}
+
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  text-decoration: none;
+  position: relative;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-sidebar-link i {
+  font-size: 17px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.admin-sidebar-link-label {
+  flex: 1;
+}
+
+.admin-sidebar-link:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.admin-sidebar-link.active {
+  background: #eeedfe;
+  color: #534ab7;
+  font-weight: 500;
+}
+
+.admin-sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: #7f77dd;
+  border-radius: 0 3px 3px 0;
+}
+
+.admin-sidebar-pro {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: #7f77dd;
+  color: #ffffff;
+}
+
+.admin-sidebar-footer {
+  margin-top: auto;
+  padding: 16px 16px 0;
+  border-top: 0.5px solid #e5e7eb;
+}
+
+.admin-sidebar-store-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.admin-sidebar-store-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1d9e75;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-store-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-sidebar-store-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sidebar-store-plan {
+  font-size: 11px;
+  color: #0f6e56;
+}
+
+/* ─── ÁREA DIREITA ───────────────────────────────────────────── */
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.orby-header {
+  flex-shrink: 0;
+  position: relative !important;
+  top: auto !important;
+}
+
+.admin-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ─── OVERLAY MOBILE ─────────────────────────────────────────── */
+
+.admin-sidebar-overlay {
+  display: none;
+}
+
+/* ─── DASHBOARD CONTENT ──────────────────────────────────────── */
+
+.dash-content {
+  padding: 28px 32px;
+}
+
+.dash-loading {
+  padding: 40px 32px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dash-page-header {
+  margin-bottom: 24px;
+}
+
+.dash-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.dash-page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dash-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dash-metric-card {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.dash-metric-accent {
+  background: #eeedfe;
+  border-color: #afa9ec;
+}
+
+.dash-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.dash-metric-accent .dash-metric-label {
+  color: #534ab7;
+}
+
+.dash-metric-label i {
+  font-size: 14px;
+}
+
+.dash-metric-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-metric-accent .dash-metric-value {
+  color: #3c3489;
+}
+
+.dash-metric-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.dash-metric-accent .dash-metric-sub {
+  color: #534ab7;
+}
+
+.dash-metric-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #854f0b;
+  background: #faeeda;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+
+.dash-metric-warn i {
+  font-size: 11px;
+}
+
+.dash-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px;
+}
+
+.dash-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.dash-quick-card {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.dash-quick-card:hover {
+  border-color: #afa9ec;
+  background: #f9f8ff;
+  transform: translateY(-1px);
+}
+
+.dash-quick-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #eeedfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #534ab7;
+  font-size: 16px;
+}
+
+.dash-quick-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-quick-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.dash-sales-section {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.dash-sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dash-sales-count {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.dash-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  gap: 10px;
+  color: #9ca3af;
+}
+
+.dash-empty i {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.dash-empty p {
+  font-size: 13px;
+  margin: 0;
+}
+
+.dash-sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dash-sales-table thead tr {
+  border-bottom: 0.5px solid #e5e7eb;
+}
+
+.dash-sales-table th {
+  text-align: left;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 0 12px 10px 0;
+  font-size: 12px;
+}
+
+.dash-sales-table td {
+  padding: 10px 12px 10px 0;
+  color: #111827;
+  border-bottom: 0.5px solid #f3f4f6;
+}
+
+.dash-sales-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dash-sale-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dash-sale-badge--active {
+  background: #e1f5ee;
+  color: #0f6e56;
+}
+
+.dash-sale-badge--canceled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ─── MOBILE ─────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .admin-mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 64px;
+    left: 16px;
+    z-index: 1200;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    background: #7f77dd;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: -240px;
+    transition: left 0.28s ease;
+  }
+
+  .admin-sidebar.open {
+    left: 0;
+  }
+
+  .admin-sidebar-close {
+    display: block;
+  }
+
+  .admin-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1200;
+  }
+
+  .dash-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-content {
+    padding: 20px 16px;
+  }
+
+  .dash-sales-table th:nth-child(3),
+  .dash-sales-table td:nth-child(3),
+  .dash-sales-table th:nth-child(4),
+  .dash-sales-table td:nth-child(4) {
+    display: none;
+  }
+}
+
+/* ─── SIDEBAR — BOTÕES DE AÇÃO NO RODAPÉ ────────────────────── */
+
+.admin-sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.admin-sidebar-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 0.5px solid #e5e7eb;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.admin-sidebar-action-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.admin-sidebar-action-btn i {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-action-btn--danger {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.2);
+}
+
+.admin-sidebar-action-btn--danger:hover {
+  background: #fee2e2;
+  border-color: rgba(185, 28, 28, 0.3);
+}
+
+/* Remove espaço que o header deixava */
+.admin-shell {
+  padding-top: 0 !important;
+}
+
+.admin-scroll-area {
+  padding-top: 0 !important;
+}
+
+/* ─── ORBY ADMIN — LAYOUT SHELL ─────────────────────────────── */
+
+.admin-mobile-menu-button {
+  display: none;
+}
+
+.admin-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #f6f7fb;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+
+.admin-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  height: 100%;
+  background: #ffffff;
+  border-right: 0.5px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  overflow: hidden;
+  z-index: 1300;
+}
+
+.admin-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 20px;
+  border-bottom: 0.5px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+
+.admin-sidebar-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+}
+
+.admin-sidebar-close {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+}
+
+.admin-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+}
+
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  text-decoration: none;
+  position: relative;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-sidebar-link i {
+  font-size: 17px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+}
+
+.admin-sidebar-link-label {
+  flex: 1;
+}
+
+.admin-sidebar-link:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.admin-sidebar-link.active {
+  background: #eeedfe;
+  color: #534ab7;
+  font-weight: 500;
+}
+
+.admin-sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: #7f77dd;
+  border-radius: 0 3px 3px 0;
+}
+
+.admin-sidebar-pro {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: #7f77dd;
+  color: #ffffff;
+}
+
+.admin-sidebar-footer {
+  margin-top: auto;
+  padding: 16px 16px 0;
+  border-top: 0.5px solid #e5e7eb;
+}
+
+.admin-sidebar-store-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.admin-sidebar-store-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1d9e75;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-store-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-sidebar-store-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sidebar-store-plan {
+  font-size: 11px;
+  color: #0f6e56;
+}
+
+/* ─── ÁREA DIREITA ───────────────────────────────────────────── */
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.orby-header {
+  flex-shrink: 0;
+  position: relative !important;
+  top: auto !important;
+}
+
+.admin-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ─── OVERLAY MOBILE ─────────────────────────────────────────── */
+
+.admin-sidebar-overlay {
+  display: none;
+}
+
+/* ─── DASHBOARD CONTENT ──────────────────────────────────────── */
+
+.dash-content {
+  padding: 28px 32px;
+}
+
+.dash-loading {
+  padding: 40px 32px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dash-page-header {
+  margin-bottom: 24px;
+}
+
+.dash-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 2px;
+}
+
+.dash-page-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dash-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dash-metric-card {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.dash-metric-accent {
+  background: #eeedfe;
+  border-color: #afa9ec;
+}
+
+.dash-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.dash-metric-accent .dash-metric-label {
+  color: #534ab7;
+}
+
+.dash-metric-label i {
+  font-size: 14px;
+}
+
+.dash-metric-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-metric-accent .dash-metric-value {
+  color: #3c3489;
+}
+
+.dash-metric-sub {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.dash-metric-accent .dash-metric-sub {
+  color: #534ab7;
+}
+
+.dash-metric-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #854f0b;
+  background: #faeeda;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+
+.dash-metric-warn i {
+  font-size: 11px;
+}
+
+.dash-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px;
+}
+
+.dash-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.dash-quick-card {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.dash-quick-card:hover {
+  border-color: #afa9ec;
+  background: #f9f8ff;
+  transform: translateY(-1px);
+}
+
+.dash-quick-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #eeedfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #534ab7;
+  font-size: 16px;
+}
+
+.dash-quick-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dash-quick-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.dash-sales-section {
+  background: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.dash-sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dash-sales-count {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.dash-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  gap: 10px;
+  color: #9ca3af;
+}
+
+.dash-empty i {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.dash-empty p {
+  font-size: 13px;
+  margin: 0;
+}
+
+.dash-sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dash-sales-table thead tr {
+  border-bottom: 0.5px solid #e5e7eb;
+}
+
+.dash-sales-table th {
+  text-align: left;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 0 12px 10px 0;
+  font-size: 12px;
+}
+
+.dash-sales-table td {
+  padding: 10px 12px 10px 0;
+  color: #111827;
+  border-bottom: 0.5px solid #f3f4f6;
+}
+
+.dash-sales-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dash-sale-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dash-sale-badge--active {
+  background: #e1f5ee;
+  color: #0f6e56;
+}
+
+.dash-sale-badge--canceled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ─── MOBILE ─────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .admin-mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 64px;
+    left: 16px;
+    z-index: 1200;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    background: #7f77dd;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: -240px;
+    transition: left 0.28s ease;
+  }
+
+  .admin-sidebar.open {
+    left: 0;
+  }
+
+  .admin-sidebar-close {
+    display: block;
+  }
+
+  .admin-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1200;
+  }
+
+  .dash-metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-content {
+    padding: 20px 16px;
+  }
+
+  .dash-sales-table th:nth-child(3),
+  .dash-sales-table td:nth-child(3),
+  .dash-sales-table th:nth-child(4),
+  .dash-sales-table td:nth-child(4) {
+    display: none;
+  }
+}
+
+/* ─── SIDEBAR — BOTÕES DE AÇÃO NO RODAPÉ ────────────────────── */
+
+.admin-sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.admin-sidebar-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 0.5px solid #e5e7eb;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.admin-sidebar-action-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.admin-sidebar-action-btn i {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-action-btn--danger {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.2);
+}
+
+.admin-sidebar-action-btn--danger:hover {
+  background: #fee2e2;
+  border-color: rgba(185, 28, 28, 0.3);
+}
+
+/* Remove espaço que o header deixava */
+.admin-shell {
+  padding-top: 0 !important;
+}
+
+.admin-scroll-area {
+  padding-top: 0 !important;
+}
+
+/* ─── BOTÃO HAMBURGER MOBILE ─────────────────────────────────── */
+
+.admin-hamburger {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .admin-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1100;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: #7f77dd;
+    color: #ffffff;
+    font-size: 22px;
+    box-shadow: 0 4px 16px rgba(127, 119, 221, 0.4);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+  }
+
+  .admin-hamburger:hover {
+    background: #534ab7;
+    transform: scale(1.06);
+  }
+}

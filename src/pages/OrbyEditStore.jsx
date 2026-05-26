@@ -19,6 +19,7 @@ function OrbyEditStore() {
   const [instagram, setInstagram] = useState('')
   const [email, setEmail] = useState('')
   const [active, setActive] = useState(true)
+  const [plan, setPlan] = useState('basic')
 
   const [primary, setPrimary] = useState('#c5a19c')
   const [secondary, setSecondary] = useState('#eee3cf')
@@ -78,6 +79,7 @@ function OrbyEditStore() {
         setInstagram(data.instagram || '')
         setEmail(data.email || '')
         setActive(data.active !== false)
+        setPlan(data.plan || 'basic')
 
         setPrimary(data.colors?.primary || '#c5a19c')
         setSecondary(data.colors?.secondary || '#eee3cf')
@@ -125,6 +127,7 @@ function OrbyEditStore() {
         instagram,
         email,
         active,
+        plan,
 
         colors: {
           primary,
@@ -247,6 +250,20 @@ function OrbyEditStore() {
                     checked={active}
                     onChange={(e) => setActive(e.target.checked)}
                 />
+
+                <h3>Plano da loja</h3>
+                <select
+                  value={plan}
+                  onChange={(e) => setPlan(e.target.value)}
+                >
+                  <option value="basic">
+                    BASIC
+                  </option>
+
+                  <option value="pro">
+                    PRO
+                  </option>
+                </select>
 
                 <span className="orby-switch"></span>
                 </label>

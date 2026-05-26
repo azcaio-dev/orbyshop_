@@ -96,16 +96,44 @@ function OrbyAdminDashboard() {
   }
 
   async function deleteStore(store) {
-    const confirmDelete = confirm(`Deseja excluir a loja "${store.name}"?`)
+    const confirmDelete = confirm(
+      `Deseja excluir a loja "${store.name}"? Essa ação também removerá produtos, banners e vendas.`
+    )
 
     if (!confirmDelete) return
 
+    const secondConfirm = confirm(
+      'Tem certeza? Essa ação não poderá ser desfeita.'
+    )
+
+    if (!secondConfirm) return
+
     try {
+      const subcollections = [
+        'products',
+        'banners',
+        'sales',
+      ]
+
+      for (const subcollection of subcollections) {
+        const snapshot = await getDocs(
+          collection(db, 'stores', store.id, subcollection)
+        )
+
+        for (const itemDoc of snapshot.docs) {
+          await deleteDoc(
+            doc(db, 'stores', store.id, subcollection, itemDoc.id)
+          )
+        }
+      }
+
       await deleteDoc(doc(db, 'stores', store.id))
 
-      setStores((prev) => prev.filter((item) => item.id !== store.id))
+      setStores((prev) =>
+        prev.filter((item) => item.id !== store.id)
+      )
 
-      alert('Loja excluída com sucesso!')
+      alert('Loja e dados relacionados excluídos com sucesso!')
     } catch (error) {
       console.error(error)
       alert('Erro ao excluir loja')

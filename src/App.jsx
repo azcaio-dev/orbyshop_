@@ -5,16 +5,22 @@ import AdminLogin from './pages/AdminLogin'
 import AdminProducts from './pages/AdminProducts'
 import AdminBanners from './pages/AdminBanners'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminSales from './pages/AdminSales'
+import AdminStock from './pages/AdminStock'
+import AdminFinancial from './pages/AdminFinancial'
 import Footer from "./components/footer.jsx";
 import Products from './pages/Products'
 import OrbyAdminDashboard from './pages/OrbyAdminDashboard'
 import OrbyCreateStore from './pages/OrbyCreateStore'
 import OrbyEditStore from './pages/OrbyEditStore'
 import Landing from './pages/Landing'
+import ScrollToTop from './components/ScrollToTop'
 
 function App() {
   return (
     <BrowserRouter>
+    <ScrollToTop />
+    
       <Routes>
 
         <Route path="/orby-admin/dashboard" element={<OrbyAdminDashboard />} />
@@ -36,6 +42,9 @@ function App() {
         <Route path="/admin/:storeSlug/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/:storeSlug/produtos" element={<AdminProducts />} />
         <Route path="/admin/:storeSlug/banners" element={<AdminBanners />} />
+        <Route path="/admin/:storeSlug/vendas" element={<AdminSales />} />
+        <Route path="/admin/:storeSlug/estoque" element={<AdminStock />} />
+        <Route path="/admin/:storeSlug/financeiro" element={<AdminFinancial />} />
       </Routes>
 
       {!window.location.pathname.startsWith('/admin') &&
