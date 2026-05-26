@@ -60,6 +60,7 @@ function Products() {
   const [visibleCount, setVisibleCount] = useState(10)
   const [openSearch, setOpenSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedSizeFilter, setSelectedSizeFilter] = useState(null)
 
   const cartQuantity = cart.reduce((acc, item) => acc + item.quantity, 0)
 
@@ -137,6 +138,8 @@ function Products() {
   if (storeLoading || !store) {
     return null
   }
+
+  const allSizes = [...new Set(products.flatMap((p) => p.sizes || []))].sort()
 
   if (store.active === false) {
     return (
@@ -236,6 +239,54 @@ function Products() {
           {activeFilter ? filterLabel : 'Todos os produtos'}
         </h2>
 
+        {/* FILTRO POR TAMANHO */}
+        {!activeFilter && allSizes.length > 0 && (
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            marginBottom: '20px',
+            alignItems: 'center',
+          }}>
+            <span style={{ fontSize: '13px', opacity: 0.6, marginRight: '4px' }}>Tamanho:</span>
+            {allSizes.map((size) => (
+              <button
+                key={size}
+                onClick={() => setSelectedSizeFilter(selectedSizeFilter === size ? null : size)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  border: '1px solid var(--color-primary, #111)',
+                  background: selectedSizeFilter === size ? 'var(--color-primary, #111)' : 'transparent',
+                  color: selectedSizeFilter === size ? '#fff' : 'var(--color-primary, #111)',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  fontWeight: selectedSizeFilter === size ? '600' : '400',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {size}
+              </button>
+            ))}
+            {selectedSizeFilter && (
+              <button
+                onClick={() => setSelectedSizeFilter(null)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  border: '1px solid #ccc',
+                  background: 'transparent',
+                  color: '#888',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕ Limpar
+              </button>
+            )}
+          </div>
+        )}
+
         <section className="products-grid">
           {loading ? (
             <>
@@ -243,104 +294,103 @@ function Products() {
                 <div key={i} className="skeleton-card"></div>
               ))}
             </>
-          ) : filteredProducts.length > 0 ? (
-            filteredProducts.slice(0, visibleCount).map((product) => (
-              <article
-                className={`product-card ${!product.available ? 'unavailable' : ''}`}
-                key={product.id}
-                onClick={() => navigate(`${storePrefix}/produto/${product.id}`)}
-              >
-                <div className="product-image-wrapper" style={{ position: 'relative' }}>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="product-image"
-                  />
-
-                  {!product.available && (
-                    <span className="unavailable-badge">Indisponível</span>
-                  )}
-
-                  {product.productSection === 'outlet' && product.oldPrice && (
-                    <span className="discount-badge">
-                      {Math.round((1 - product.price / product.oldPrice) * 100)}%
-                    </span>
-                  )}
-                </div>
-
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-
-                  {product.productSection === 'outlet' && product.oldPrice ? (
-                    <div className="price-box">
-                      <span className="old-price">
-                        {Number(product.oldPrice).toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </span>
-
-                      <strong className="current-price">
-                        {Number(product.price).toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </strong>
-                    </div>
-                  ) : (
-                    <p>
-                      {Number(product.price).toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                {activeFilter !== 'search' && (
-                  <button
-                    className={`add-cart-button ${
-                      addedId === product.id ? 'added' : ''
-                    }`}
-                    disabled={product.available === false}
-                    onClick={(e) => {
-                      e.stopPropagation()
-
-                      if (!product.available) return
-
-                      setSelectedProduct(product)
-                      setSelectedSize('')
-                    }}
-                  >
-                    {!product.available
-                      ? 'Indisponível'
-                      : addedId === product.id
-                      ? '✔ Adicionado'
-                      : '+ Carrinho'}
-                  </button>
-                )}
-              </article>
-            ))
           ) : (
-            <div className="empty-products">
-              <p>Nenhum produto encontrado.</p>
-            </div>
+            (() => {
+              const displayed = selectedSizeFilter
+                ? filteredProducts.filter((p) => p.sizes?.includes(selectedSizeFilter))
+                : filteredProducts
+
+              return displayed.length > 0 ? (
+                displayed.slice(0, visibleCount).map((product) => (
+                  <article
+                    className={`product-card ${!product.available ? 'unavailable' : ''}`}
+                    key={product.id}
+                    onClick={() => navigate(`${storePrefix}/produto/${product.id}`)}
+                  >
+                    <div className="product-image-wrapper" style={{ position: 'relative' }}>
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="product-image"
+                      />
+
+                      {!product.available && (
+                        <span className="unavailable-badge">Indisponível</span>
+                      )}
+
+                      {product.productSection === 'outlet' && product.oldPrice && (
+                        <span className="discount-badge">
+                          {Math.round((1 - product.price / product.oldPrice) * 100)}%
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="product-info">
+                      <h3>{product.name}</h3>
+
+                      {product.productSection === 'outlet' && product.oldPrice ? (
+                        <div className="price-box">
+                          <span className="old-price">
+                            {Number(product.oldPrice).toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}
+                          </span>
+
+                          <strong className="current-price">
+                            {Number(product.price).toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}
+                          </strong>
+                        </div>
+                      ) : (
+                        <p>
+                          {Number(product.price).toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })}
+                        </p>
+                      )}
+                    </div>
+
+                    {activeFilter !== 'search' && (
+                      <button
+                        className={`add-cart-button ${addedId === product.id ? 'added' : ''}`}
+                        disabled={product.available === false}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (!product.available) return
+                          setSelectedProduct(product)
+                          setSelectedSize('')
+                        }}
+                      >
+                        {!product.available
+                          ? 'Indisponível'
+                          : addedId === product.id
+                          ? '✔ Adicionado'
+                          : '+ Carrinho'}
+                      </button>
+                    )}
+                  </article>
+                ))
+              ) : (
+                <div className="empty-products">
+                  <p>Nenhum produto encontrado.</p>
+                </div>
+              )
+            })()
           )}
 
+          {/* MODAL DE TAMANHO — sem alteração */}
           {selectedProduct &&
             createPortal(
               <div
                 className="size-modal-overlay"
                 onClick={() => setSelectedProduct(null)}
               >
-                <div
-                  className="size-modal"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    className="size-modal-close"
-                    onClick={() => setSelectedProduct(null)}
-                  >
+                <div className="size-modal" onClick={(e) => e.stopPropagation()}>
+                  <button className="size-modal-close" onClick={() => setSelectedProduct(null)}>
                     ✕
                   </button>
 
@@ -360,18 +410,11 @@ function Products() {
                   </div>
 
                   <button
-                    className={`size-modal-confirm ${
-                      addedId === selectedProduct?.id ? 'added' : ''
-                    }`}
+                    className={`size-modal-confirm ${addedId === selectedProduct?.id ? 'added' : ''}`}
                     disabled={!selectedSize}
                     onClick={() => {
-                      addToCart({
-                        ...selectedProduct,
-                        selectedSize,
-                      })
-
+                      addToCart({ ...selectedProduct, selectedSize })
                       setAddedId(selectedProduct.id)
-
                       setTimeout(() => {
                         setAddedId(null)
                         setSelectedProduct(null)
@@ -379,9 +422,7 @@ function Products() {
                       }, 800)
                     }}
                   >
-                    {addedId === selectedProduct?.id
-                      ? '✔ Adicionado'
-                      : 'Adicionar ao carrinho'}
+                    {addedId === selectedProduct?.id ? '✔ Adicionado' : 'Adicionar ao carrinho'}
                   </button>
                 </div>
               </div>,
@@ -389,17 +430,16 @@ function Products() {
             )}
         </section>
 
-        {visibleCount < filteredProducts.length && (
+        {visibleCount < (selectedSizeFilter
+          ? filteredProducts.filter((p) => p.sizes?.includes(selectedSizeFilter))
+          : filteredProducts
+        ).length && (
           <div className="load-more">
             <button
               onClick={() => {
                 setVisibleCount((prev) => prev + 10)
-
                 setTimeout(() => {
-                  window.scrollBy({
-                    top: 300,
-                    behavior: 'smooth',
-                  })
+                  window.scrollBy({ top: 300, behavior: 'smooth' })
                 }, 100)
               }}
             >
