@@ -15,15 +15,19 @@ function useStore() {
       location.pathname.split('/')[1]
     )
       ? location.pathname.split('/')[1]
-      : 'labany'
+      : null
 
-  const storeSlug = slugFromParams || slugFromPath || 'labany'
+  const storeSlug = slugFromParams || slugFromPath || null
 
   const [store, setStore] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function loadStore() {
+    useEffect(() => {
+      async function loadStore() {
+        if (!storeSlug) {
+          setLoading(false)
+          return
+        }
       try {
         setLoading(true)
 
