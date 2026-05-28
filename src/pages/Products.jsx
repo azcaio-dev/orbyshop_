@@ -142,6 +142,8 @@ function Products() {
     loadProducts()
   }, [storeSlug, section])
 
+  const [openFilters, setOpenFilters] = useState(false)
+
   const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))]
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
 
@@ -249,8 +251,34 @@ function Products() {
           {activeFilter ? filterLabel : 'Todos os produtos'}
         </h2>
 
+        {/* BOTÃO FILTRAR */}
+        <button
+          className="filter-toggle-button"
+          onClick={() => setOpenFilters(!openFilters)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '7px',
+            background: '#fff',
+            border: 'none',
+            borderRadius: '999px',
+            padding: '9px 18px',
+            fontSize: '14px',
+            fontWeight: '500',
+            color: '#111',
+            cursor: 'pointer',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.10)',
+          }}
+        >
+          {openFilters ? (
+            <><span style={{ fontSize: '15px', lineHeight: 1 }}>✕</span> Fechar filtros</>
+          ) : (
+            <><span style={{ fontSize: '16px', lineHeight: 1 }}>⇅</span> Filtrar</>
+          )}
+        </button>
+
         {/* FILTRO POR TAMANHO */}
-        {!activeFilter && allSizes.length > 0 && (
+        {!activeFilter && openFilters && allSizes.length > 0 && (
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
