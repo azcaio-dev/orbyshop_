@@ -34,8 +34,10 @@ const sectionLabels = {
 function Products() {
   const { cart, addToCart } = useCart()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const section = searchParams.get('section')
+  const sizeParam = searchParams.get('size')
+  
 
   const { store, loading: storeLoading, storeSlug } = useStore()
 
@@ -88,6 +90,14 @@ function Products() {
       document.documentElement.classList.remove('menu-open')
     }
   }, [openMenu, openCart])
+
+  useEffect(() => {
+    if (sizeParam) {
+      setSelectedSizeFilter(sizeParam)
+    } else {
+      setSelectedSizeFilter(null)
+    }
+  }, [sizeParam])
 
   useEffect(() => {
     async function loadProducts() {
@@ -252,7 +262,24 @@ function Products() {
             {allSizes.map((size) => (
               <button
                 key={size}
-                onClick={() => setSelectedSizeFilter(selectedSizeFilter === size ? null : size)}
+                onClick={() => {
+                  const newSize =
+                    selectedSizeFilter === size
+                      ? null
+                      : size
+
+                  setSelectedSizeFilter(newSize)
+
+                  const params = new URLSearchParams(searchParams)
+
+                  if (newSize) {
+                    params.set('size', newSize)
+                  } else {
+                    params.delete('size')
+                  }
+
+                  setSearchParams(params)
+                }}
                 style={{
                   padding: '6px 14px',
                   borderRadius: '20px',
@@ -270,7 +297,15 @@ function Products() {
             ))}
             {selectedSizeFilter && (
               <button
-                onClick={() => setSelectedSizeFilter(null)}
+                onClick={() => {
+                setSelectedSizeFilter(null)
+
+                const params = new URLSearchParams(searchParams)
+
+                params.delete('size')
+
+                setSearchParams(params)
+              }}
                 style={{
                   padding: '6px 12px',
                   borderRadius: '20px',
