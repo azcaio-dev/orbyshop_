@@ -24,35 +24,38 @@ function useStore() {
 
     useEffect(() => {
       async function loadStore() {
+        console.log('storeSlug:', storeSlug)
+        
         if (!storeSlug) {
           setLoading(false)
           return
         }
-      try {
-        setLoading(true)
 
-        const storeRef = doc(db, 'stores', storeSlug)
-        const storeSnap = await getDoc(storeRef)
+        try {
+          setLoading(true)
 
-        if (storeSnap.exists()) {
-          setStore({
-            plan: 'basic',
-            ...storeSnap.data(),
-          })        
+          const storeRef = doc(db, 'stores', storeSlug)
+          const storeSnap = await getDoc(storeRef)
+
+          if (storeSnap.exists()) {
+            setStore({
+              plan: 'basic',
+              ...storeSnap.data(),
+            })
           } else {
-          console.warn('Loja não encontrada:', storeSlug)
+            console.warn('Loja não encontrada:', storeSlug)
+            setStore(null)
+          }
+        } catch (error) {
+          console.error('Erro ao carregar loja:', error)
           setStore(null)
+        } finally {
+          setLoading(false)
         }
-      } catch (error) {
-        console.error('Erro ao carregar loja:', error)
-        setStore(null)
-      } finally {
-        setLoading(false)
       }
-    }
 
-    loadStore()
-  }, [storeSlug])
+      loadStore()
+    }, [storeSlug])
 
   return {
     store,
