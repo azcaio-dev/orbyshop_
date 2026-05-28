@@ -188,6 +188,8 @@ function OrbyAdminDashboard() {
       'Deseja copiar os banners da loja original?'
     )
 
+    const copyFooter = confirm('Deseja copiar o footer da loja original?')
+
     try {
       const newStoreRef = doc(db, 'stores', newSlug)
       const newStoreSnap = await getDoc(newStoreRef)
@@ -256,6 +258,19 @@ function OrbyAdminDashboard() {
           )
         }
       }
+
+      if (copyFooter) {
+      const footerSnapshot = await getDocs(
+        collection(db, 'stores', store.id, 'footer')
+      )
+
+      for (const footerDoc of footerSnapshot.docs) {
+        await setDoc(
+          doc(db, 'stores', newSlug, 'footer', footerDoc.id),
+          footerDoc.data()
+        )
+      }
+    }
 
       const snapshot = await getDocs(collection(db, 'stores'))
 
