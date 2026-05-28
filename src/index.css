@@ -3734,21 +3734,6 @@ button:hover {
 /* ─── MOBILE ─────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  .admin-mobile-menu-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    top: 64px;
-    left: 16px;
-    z-index: 1200;
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 12px;
-    background: #7f77dd;
-  }
-
   .admin-sidebar {
     position: fixed;
     top: 0;
