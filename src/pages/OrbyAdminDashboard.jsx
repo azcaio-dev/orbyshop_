@@ -65,7 +65,7 @@ function OrbyAdminDashboard() {
           ...doc.data(),
         }))
 
-        setStores(data)
+        setStores(data.sort((a, b) => a.name?.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })))
       } catch (error) {
         console.error('Erro ao carregar lojas:', error)
       } finally {
@@ -279,7 +279,7 @@ function OrbyAdminDashboard() {
         ...doc.data(),
       }))
 
-      setStores(data)
+      setStores(data.sort((a, b) => a.name?.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })))
 
       alert(
         shouldCreateLogin
