@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,13 +13,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 
-const secondaryApp = initializeApp(
-  firebaseConfig,
-  'Secondary'
-)
+const secondaryApp = initializeApp(firebaseConfig, 'Secondary')
 
 export const db = getFirestore(app)
 
 export const auth = getAuth(app)
-
 export const secondaryAuth = getAuth(secondaryApp)
+
+// Garante que a sessão persiste mesmo fechando o browser
+setPersistence(auth, browserLocalPersistence)
