@@ -328,7 +328,7 @@ const storePrefix = `/${storeSlug}`
                     onClick={() => goToProduct(product.id)}
                   >
                     <img 
-                      src={product.image}
+                      src={product.images?.[0] || product.image}
                       alt={product.name} 
                       loading="lazy" />
 
@@ -376,7 +376,8 @@ const storePrefix = `/${storeSlug}`
                     className="launch-card"
                     onClick={() => goToProduct(product.id)}
                   >
-                    <img src={product.image} alt={product.name} />
+                    <img src={product.images?.[0] || product.image}
+                    alt={product.name} />
 
                     <div>
                       <h3>{product.name}</h3>
@@ -423,7 +424,8 @@ const storePrefix = `/${storeSlug}`
                     style={{ position: 'relative' }}
                     onClick={() => goToProduct(product.id)}
                   >
-                    <img src={product.image} alt={product.name} />
+                    <img src={product.images?.[0] || product.image}
+                    alt={product.name} />
 
                     {product.oldPrice && (
                       <span className="discount-badge">
@@ -491,7 +493,7 @@ const storePrefix = `/${storeSlug}`
                   >
                     <div className="product-image-wrapper">
                       <img
-                        src={product.image}
+                        src={product.images?.[0] || product.image}
                         alt={product.name}
                         className="product-image"
                         loading='lazy'

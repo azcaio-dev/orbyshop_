@@ -372,7 +372,7 @@ function Products() {
                   >
                     <div className="product-image-wrapper" style={{ position: 'relative' }}>
                       <img
-                        src={product.image}
+                        src={product.images?.[0] || product.image}
                         alt={product.name}
                         className="product-image"
                       />
