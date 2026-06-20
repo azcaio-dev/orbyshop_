@@ -9,6 +9,24 @@ import Toast from '../components/Toast'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 
+// ✅ Retorna os tamanhos com estoque > 0 para uma variação ou produto principal
+function getSizesWithStock(product, variation) {
+  const sizes = variation?.sizes || product.sizes || []
+  const sizeStocks = variation?.sizeStocks || product.sizeStocks
+
+  // Se não há controle de estoque por tamanho, mostra todos
+  if (!sizeStocks || Object.keys(sizeStocks).length === 0) return sizes
+
+  return sizes.filter((size) => Number(sizeStocks[size] || 0) > 0)
+}
+
+// ✅ Verifica se um tamanho específico tem estoque
+function sizeHasStock(product, variation, size) {
+  const sizeStocks = variation?.sizeStocks || product.sizeStocks
+  if (!sizeStocks || Object.keys(sizeStocks).length === 0) return true
+  return Number(sizeStocks[size] || 0) > 0
+}
+
 function ProductDetails() {
   const navigate = useNavigate()
   const { cart, addToCart } = useCart()
@@ -30,37 +48,23 @@ function ProductDetails() {
 
   function showToast(message, type = 'success') {
     setToast({ message, type })
-
-    setTimeout(() => {
-      setToast({ message: '', type: 'success' })
-    }, 2500)
+    setTimeout(() => setToast({ message: '', type: 'success' }), 2500)
   }
 
   useEffect(() => {
-    if (product) {
-      document.title = `${product.name} | ${store.name}`
-    }
+    if (product) document.title = `${product.name} | ${store.name}`
   }, [product, store])
 
   useEffect(() => {
     async function loadProduct() {
       try {
         setLoading(true)
-
         const productRef = doc(db, 'stores', storeSlug, 'products', id)
         const productSnap = await getDoc(productRef)
-
         if (productSnap.exists()) {
-          const data = {
-            id: productSnap.id,
-            ...productSnap.data(),
-          }
-
-          const productImages =
-            data.images?.length > 0
-              ? data.images
-              : [data.image, data.image2].filter(Boolean)
-
+          const data = { id: productSnap.id, ...productSnap.data() }
+          const productImages = data.images?.length > 0
+            ? data.images : [data.image, data.image2].filter(Boolean)
           setProduct(data)
           setSelectedImage(productImages[0] || '')
           setSelectedVariation(null)
@@ -75,87 +79,44 @@ function ProductDetails() {
         setLoading(false)
       }
     }
-
     loadProduct()
   }, [storeSlug, id])
 
-  if (storeLoading || !store) {
-    return null
-  }
+  if (storeLoading || !store) return null
 
   if (store.active === false) {
     return (
-      <main
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: '16px',
-          background: store.colors?.background || '#fff',
-          color: store.colors?.text || '#111',
-          padding: '24px',
-          textAlign: 'center',
-        }}
-      >
-        <img
-          src={store.logo}
-          alt={store.name}
-          style={{
-            width: '120px',
-            objectFit: 'contain',
-          }}
-        />
-
-        <h1 style={{ fontSize: '28px', margin: 0 }}>
-          Loja temporariamente indisponível
-        </h1>
-
-        <p
-          style={{
-            maxWidth: '420px',
-            opacity: 0.7,
-            lineHeight: 1.6,
-          }}
-        >
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', flexDirection: 'column', gap: '16px',
+        background: store.colors?.background || '#fff', color: store.colors?.text || '#111',
+        padding: '24px', textAlign: 'center' }}>
+        <img src={store.logo} alt={store.name} style={{ width: '120px', objectFit: 'contain' }} />
+        <h1 style={{ fontSize: '28px', margin: 0 }}>Loja temporariamente indisponível</h1>
+        <p style={{ maxWidth: '420px', opacity: 0.7, lineHeight: 1.6 }}>
           Esta loja está desativada no momento. Tente novamente mais tarde.
         </p>
       </main>
     )
   }
 
-  if (loading) {
-    return (
-      <main className="container product-loading">
-        <p>Carregando produto...</p>
-      </main>
-    )
-  }
+  if (loading) return <main className="container product-loading"><p>Carregando produto...</p></main>
+  if (!product) return <main className="container product-empty"><h2>Produto não encontrado</h2></main>
 
-  if (!product) {
-    return (
-      <main className="container product-empty">
-        <h2>Produto não encontrado</h2>
-      </main>
-    )
-  }
-
-  const productImages =
-    product.images?.length > 0
-      ? product.images
-      : [product.image, product.image2].filter(Boolean)
+  const productImages = product.images?.length > 0
+    ? product.images : [product.image, product.image2].filter(Boolean)
 
   const formattedPrice = Number(product.price).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
+    style: 'currency', currency: 'BRL',
   })
 
-  const availableSizes = selectedVariation?.sizes || product.sizes || []
+  // ✅ Apenas tamanhos com estoque disponível
+  const availableSizes = getSizesWithStock(product, selectedVariation)
 
-  const selectedColor =
-    selectedVariation?.colorName || product.mainColor || '-'
+  // Todos os tamanhos (para mostrar os esgotados riscados)
+  const allSizes = selectedVariation?.sizes || product.sizes || []
+  const outOfStockSizes = allSizes.filter((size) => !availableSizes.includes(size))
 
+  const selectedColor = selectedVariation?.colorName || product.mainColor || '-'
   const phone = String(store.whatsapp || '').replace(/\D/g, '')
 
   const whatsappMessage = `${store.checkout?.messageIntro || 'Olá! Tenho interesse nesse produto:'}
@@ -165,35 +126,26 @@ Preço: ${formattedPrice}
 Cor: ${selectedColor}
 Tamanho: ${selectedSize || '-'}`
 
-  const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(
-    whatsappMessage
-  )}`
+  const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}`
+
+  // ✅ Produto disponível apenas se tiver estoque real no tamanho selecionado
+  const isProductAvailable = product.available &&
+    (!selectedSize || sizeHasStock(product, selectedVariation, selectedSize))
 
   return (
     <>
       <header className="details-header full-details-header">
-        <button className="details-back-button" onClick={() => navigate(-1)}>
-          ← Voltar
-        </button>
-
+        <button className="details-back-button" onClick={() => navigate(-1)}>← Voltar</button>
         <button className="details-cart-button" onClick={() => setOpenCart(true)}>
           <img src={cartIcon} alt="Carrinho" className="cart-icon" />
-
-          {cartQuantity > 0 && (
-            <span className="cart-badge">{cartQuantity}</span>
-          )}
+          {cartQuantity > 0 && <span className="cart-badge">{cartQuantity}</span>}
         </button>
       </header>
 
       <main className="product-details fade-in">
         <section className="product-gallery">
           <div style={{ position: 'relative' }}>
-            <img
-              src={selectedImage || productImages[0]}
-              alt={product.name}
-              className="main-product-image"
-            />
-
+            <img src={selectedImage || productImages[0]} alt={product.name} className="main-product-image" />
             {product.productSection === 'outlet' && product.oldPrice && (
               <span className="discount-badge">
                 {Math.round((1 - product.price / product.oldPrice) * 100)}%
@@ -203,31 +155,12 @@ Tamanho: ${selectedSize || '-'}`
 
           <div className="thumbs">
             {productImages.map((image, index) => (
-              <img
-                key={index}
-                src={image}
-                alt={product.name}
-                onClick={() => {
-                  setSelectedImage(image)
-                  setSelectedVariation(null)
-                  setSelectedSize('')
-                }}
-                loading="lazy"
-              />
+              <img key={index} src={image} alt={product.name} loading="lazy"
+                onClick={() => { setSelectedImage(image); setSelectedVariation(null); setSelectedSize('') }} />
             ))}
-
             {product.variations?.map((variation, index) => (
-              <img
-                key={index}
-                src={variation.image}
-                alt={variation.colorName}
-                onClick={() => {
-                  setSelectedVariation(variation)
-                  setSelectedImage(variation.image)
-                  setSelectedSize('')
-                }}
-                loading="lazy"
-              />
+              <img key={index} src={variation.image} alt={variation.colorName} loading="lazy"
+                onClick={() => { setSelectedVariation(variation); setSelectedImage(variation.image); setSelectedSize('') }} />
             ))}
           </div>
         </section>
@@ -238,13 +171,9 @@ Tamanho: ${selectedSize || '-'}`
           <div className="product-price-box">
             {product.productSection === 'outlet' && product.oldPrice && (
               <span className="product-old-price">
-                {Number(product.oldPrice).toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
+                {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               </span>
             )}
-
             <strong className="product-current-price">{formattedPrice}</strong>
           </div>
 
@@ -256,35 +185,17 @@ Tamanho: ${selectedSize || '-'}`
           {(product.mainColor || product.variations?.length > 0) && (
             <div className="product-colors">
               <h3>Cores disponíveis</h3>
-
               <div className="size-options">
                 {product.mainColor && (
-                  <button
-                    className={!selectedVariation ? 'selected' : ''}
-                    onClick={() => {
-                      setSelectedVariation(null)
-                      setSelectedImage(productImages[0])
-                      setSelectedSize('')
-                    }}
-                  >
+                  <button className={!selectedVariation ? 'selected' : ''}
+                    onClick={() => { setSelectedVariation(null); setSelectedImage(productImages[0]); setSelectedSize('') }}>
                     {product.mainColor}
                   </button>
                 )}
-
                 {product.variations?.map((variation, index) => (
-                  <button
-                    key={index}
-                    className={
-                      selectedVariation?.colorName === variation.colorName
-                        ? 'selected'
-                        : ''
-                    }
-                    onClick={() => {
-                      setSelectedVariation(variation)
-                      setSelectedImage(variation.image)
-                      setSelectedSize('')
-                    }}
-                  >
+                  <button key={index}
+                    className={selectedVariation?.colorName === variation.colorName ? 'selected' : ''}
+                    onClick={() => { setSelectedVariation(variation); setSelectedImage(variation.image); setSelectedSize('') }}>
                     {variation.colorName}
                   </button>
                 ))}
@@ -294,70 +205,71 @@ Tamanho: ${selectedSize || '-'}`
 
           <div className="product-sizes">
             <h3>Tamanhos disponíveis</h3>
-
             <div className="size-options">
+              {/* ✅ Tamanhos com estoque */}
               {availableSizes.map((size) => (
-                <button
-                  key={size}
+                <button key={size}
                   className={selectedSize === size ? 'selected' : ''}
-                  onClick={() => setSelectedSize(size)}
-                >
+                  onClick={() => setSelectedSize(size)}>
+                  {size}
+                </button>
+              ))}
+              {/* ✅ Tamanhos sem estoque — riscados e desabilitados */}
+              {outOfStockSizes.map((size) => (
+                <button key={size} disabled
+                  style={{ opacity: 0.35, cursor: 'not-allowed', textDecoration: 'line-through' }}>
                   {size}
                 </button>
               ))}
             </div>
+            {outOfStockSizes.length > 0 && (
+              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>
+                Tamanhos riscados estão esgotados
+              </p>
+            )}
           </div>
 
           <div className="product-actions">
             <button
               className={`add-cart-button ${added ? 'added' : ''}`}
-              disabled={!product.available}
+              disabled={!product.available || availableSizes.length === 0}
               onClick={() => {
+                if (!product.available || availableSizes.length === 0) {
+                  showToast('Produto indisponível', 'warning')
+                  return
+                }
                 if (!selectedSize) {
                   showToast('Selecione um tamanho', 'warning')
                   return
                 }
-
-                if (
-                  product.variations?.length > 0 &&
-                  !selectedVariation &&
-                  !product.mainColor
-                ) {
+                // ✅ Verifica estoque do tamanho selecionado antes de adicionar
+                if (!sizeHasStock(product, selectedVariation, selectedSize)) {
+                  showToast('Este tamanho está esgotado', 'warning')
+                  return
+                }
+                if (product.variations?.length > 0 && !selectedVariation && !product.mainColor) {
                   showToast('Selecione uma cor', 'warning')
                   return
                 }
-
                 addToCart({
                   ...product,
                   image: selectedImage || productImages[0],
                   selectedSize,
-                  selectedColor:
-                    selectedVariation?.colorName || product.mainColor || '',
+                  selectedColor: selectedVariation?.colorName || product.mainColor || '',
                   price: product.price,
                 })
-
                 setAdded(true)
                 showToast('Produto adicionado ao carrinho', 'success')
-
-                setTimeout(() => {
-                  setAdded(false)
-                }, 1000)
+                setTimeout(() => setAdded(false), 1000)
               }}
             >
-              {!product.available
+              {!product.available || availableSizes.length === 0
                 ? 'Indisponível'
-                : added
-                ? '✔ Adicionado'
-                : 'Adicionar'}
+                : added ? '✔ Adicionado' : 'Adicionar'}
             </button>
 
-            {product.available && (
-              <button
-                className="whatsapp-button"
-                onClick={() => {
-                  window.location.href = whatsappLink
-                }}
-              >
+            {product.available && availableSizes.length > 0 && (
+              <button className="whatsapp-button" onClick={() => { window.location.href = whatsappLink }}>
                 Comprar pelo WhatsApp
               </button>
             )}
