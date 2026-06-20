@@ -91,6 +91,7 @@ function AdminSales() {
       showToast(`Estoque insuficiente. Disponível: ${availableStock}`, 'warning'); return
     }
     showDialog('Confirmar cadastro desta venda?', async () => {
+      console.log('✅ confirmou o dialog')
       closeDialog()
       setLoadingSale(true)
       try {

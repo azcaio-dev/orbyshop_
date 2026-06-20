@@ -5052,3 +5052,53 @@ button:hover {
 .filter-toggle-button:active {
   transform: scale(0.98);
 }
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  z-index: 1000;
+  width: 90%;
+  max-width: 400px;
+}
+
+.dialog-message {
+  font-size: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.dialog-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.dialog-btn--cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.dialog-btn--confirm {
+  background: #7c3aed;
+  color: #fff;
+}
