@@ -194,9 +194,12 @@ function AdminSales() {
             <label>Produto</label>
             <select value={selectedProductId} onChange={(e) => handleSelectProduct(e.target.value)} required>
               <option value="">Selecione um produto</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>{product.name}</option>
-              ))}
+              {[...products]
+                .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
+                .map((product) => (
+                  <option key={product.id} value={product.id}>{product.name}</option>
+                ))
+              }
             </select>
 
             {selectedProduct && (
