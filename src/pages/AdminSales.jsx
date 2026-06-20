@@ -189,10 +189,10 @@ function AdminSales() {
           <form onSubmit={handleSubmit} className="orby-admin-form">
             <label>Cliente</label>
             <input type="text" placeholder="Nome do cliente" value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)} required />
+              onChange={(e) => setCustomerName(e.target.value)} />
 
             <label>Produto</label>
-            <select value={selectedProductId} onChange={(e) => handleSelectProduct(e.target.value)} required>
+            <select value={selectedProductId} onChange={(e) => handleSelectProduct(e.target.value)}>
               <option value="">Selecione um produto</option>
               {[...products]
                 .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
@@ -206,7 +206,7 @@ function AdminSales() {
               <>
                 <label>Cor / Variação</label>
                 <select value={selectedVariationIndex}
-                  onChange={(e) => { setSelectedVariationIndex(e.target.value); setSelectedSize('') }} required>
+                  onChange={(e) => { setSelectedVariationIndex(e.target.value); setSelectedSize('') }} >
                   <option value="">Selecione uma opção</option>
                   <option value="main">{selectedProduct.mainColor || 'Principal'}</option>
                   {selectedProduct.variations?.map((variation, index) => (
@@ -219,7 +219,7 @@ function AdminSales() {
             {selectedProduct && selectedVariationIndex !== '' && (
               <>
                 <label>Tamanho</label>
-                <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)} required>
+                <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)} >
                   <option value="">Selecione um tamanho</option>
                   {(selectedVariationIndex === 'main'
                     ? selectedProduct.sizes
@@ -230,10 +230,10 @@ function AdminSales() {
             )}
 
             <label>Quantidade</label>
-            <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+            <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)}  />
 
             <label>Preço da venda</label>
-            <input type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required />
+            <input type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)}  />
 
             {selectedProduct && (
               <div className="sale-preview">
