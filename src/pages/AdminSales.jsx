@@ -79,6 +79,9 @@ function AdminSales() {
   async function handleSubmit(e) {
     e.preventDefault()
     console.log('🔥 submit chamado')
+  console.log('📦 selectedProduct:', selectedProduct)
+  console.log('📦 selectedSize:', selectedSize)
+  console.log('📦 selectedVariationIndex:', selectedVariationIndex)
     if (!selectedProduct) return
     if (!selectedSize || selectedVariationIndex === '') {
       showToast('Selecione a cor/variação e o tamanho.', 'warning'); return
