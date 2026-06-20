@@ -3,6 +3,8 @@ import { collection, getDocs, addDoc, doc, updateDoc, getDoc } from 'firebase/fi
 import { db } from '../services/firebase'
 import AdminLayout from '../layouts/AdminLayout'
 import UpgradePlan from '../components/UpgradePlan'
+import Toast from '../components/Toast'
+import AdminDialog from '../components/AdminDialog'
 import useStore from '../hooks/useStore'
 import { hasFeature } from '../utils/features'
 
@@ -21,7 +23,16 @@ function AdminSales() {
   const [quantity, setQuantity] = useState(1)
   const [unitPrice, setUnitPrice] = useState('')
   const [loadingSale, setLoadingSale] = useState(false)
+  const [toast, setToast] = useState({ message: '', type: 'success' })
+  const [dialog, setDialog] = useState({ message: '', onConfirm: null })
   const isPro = hasFeature(store, 'sales')
+
+  function showToast(message, type = 'success') {
+    setToast({ message, type })
+    setTimeout(() => setToast({ message: '', type: 'success' }), 2500)
+  }
+  function showDialog(message, onConfirm) { setDialog({ message, onConfirm }) }
+  function closeDialog() { setDialog({ message: '', onConfirm: null }) }
 
   useEffect(() => { if (storeSlug && isPro) { loadProducts(); loadSales() } }, [storeSlug, isPro])
 
@@ -36,7 +47,10 @@ function AdminSales() {
 
   async function loadProducts() {
     const snapshot = await getDocs(collection(db, 'stores', storeSlug, 'products'))
-    setProducts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
+    const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    // ✅ Ordenação alfabética
+    data.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
+    setProducts(data)
   }
 
   function handleSelectProduct(productId) {
@@ -65,71 +79,80 @@ function AdminSales() {
   async function handleSubmit(e) {
     e.preventDefault()
     if (!selectedProduct) return
-    if (!selectedSize || selectedVariationIndex === '') { alert('Selecione a cor/variação e o tamanho.'); return }
+    if (!selectedSize || selectedVariationIndex === '') {
+      showToast('Selecione a cor/variação e o tamanho.', 'warning'); return
+    }
     const availableStock = getAvailableStock()
-    if (Number(quantity) > availableStock) { alert(`Estoque insuficiente. Disponível: ${availableStock}`); return }
-    setLoadingSale(true)
-    try {
-      const total = Number(unitPrice) * Number(quantity)
-      const unitCost = Number(selectedProduct.costPrice || 0)
-      const profit = (Number(unitPrice) - unitCost) * Number(quantity)
-      await addDoc(collection(db, 'stores', storeSlug, 'sales'), {
-        customerName, productId: selectedProduct.id, productName: selectedProduct.name,
-        variationIndex: selectedVariationIndex,
-        variationName: selectedVariationIndex === 'main'
-          ? selectedProduct.mainColor || 'Principal'
-          : selectedProduct.variations?.[Number(selectedVariationIndex)]?.colorName,
-        size: selectedSize, status: 'active', quantity: Number(quantity),
-        unitPrice: Number(unitPrice), unitCost, total, profit, createdAt: new Date(),
-      })
-      let updatedProduct = { ...selectedProduct }
-      if (selectedVariationIndex === 'main') {
-        updatedProduct.sizeStocks = { ...(selectedProduct.sizeStocks || {}),
-          [selectedSize]: Number(selectedProduct.sizeStocks?.[selectedSize] || 0) - Number(quantity) }
-      } else {
-        updatedProduct.variations = (selectedProduct.variations || []).map((variation, index) => {
-          if (index !== Number(selectedVariationIndex)) return variation
-          return { ...variation, sizeStocks: { ...(variation.sizeStocks || {}),
-            [selectedSize]: Number(variation.sizeStocks?.[selectedSize] || 0) - Number(quantity) } }
+    if (Number(quantity) > availableStock) {
+      showToast(`Estoque insuficiente. Disponível: ${availableStock}`, 'warning'); return
+    }
+    showDialog('Confirmar cadastro desta venda?', async () => {
+      closeDialog()
+      setLoadingSale(true)
+      try {
+        const total = Number(unitPrice) * Number(quantity)
+        const unitCost = Number(selectedProduct.costPrice || 0)
+        const profit = (Number(unitPrice) - unitCost) * Number(quantity)
+        await addDoc(collection(db, 'stores', storeSlug, 'sales'), {
+          customerName, productId: selectedProduct.id, productName: selectedProduct.name,
+          variationIndex: selectedVariationIndex,
+          variationName: selectedVariationIndex === 'main'
+            ? selectedProduct.mainColor || 'Principal'
+            : selectedProduct.variations?.[Number(selectedVariationIndex)]?.colorName,
+          size: selectedSize, status: 'active', quantity: Number(quantity),
+          unitPrice: Number(unitPrice), unitCost, total, profit, createdAt: new Date(),
         })
-      }
-      const totalStock = calculateProductTotalStock(updatedProduct)
-      await updateDoc(doc(db, 'stores', storeSlug, 'products', selectedProduct.id),
-        { ...updatedProduct, stock: totalStock, available: totalStock > 0 })
-      alert('Venda cadastrada com sucesso!')
-      await loadSales(); await loadProducts()
-      handleSelectProduct(selectedProduct.id)
-      setCustomerName(''); setQuantity(1); setSelectedProduct(null)
-      setSelectedProductId(''); setUnitPrice(''); setSelectedVariationIndex(''); setSelectedSize('')
-    } catch (error) { console.error(error); alert('Erro ao cadastrar venda') }
-    setLoadingSale(false)
+        let updatedProduct = { ...selectedProduct }
+        if (selectedVariationIndex === 'main') {
+          updatedProduct.sizeStocks = { ...(selectedProduct.sizeStocks || {}),
+            [selectedSize]: Number(selectedProduct.sizeStocks?.[selectedSize] || 0) - Number(quantity) }
+        } else {
+          updatedProduct.variations = (selectedProduct.variations || []).map((variation, index) => {
+            if (index !== Number(selectedVariationIndex)) return variation
+            return { ...variation, sizeStocks: { ...(variation.sizeStocks || {}),
+              [selectedSize]: Number(variation.sizeStocks?.[selectedSize] || 0) - Number(quantity) } }
+          })
+        }
+        const totalStock = calculateProductTotalStock(updatedProduct)
+        await updateDoc(doc(db, 'stores', storeSlug, 'products', selectedProduct.id),
+          { ...updatedProduct, stock: totalStock, available: totalStock > 0 })
+        showToast('Venda cadastrada com sucesso!', 'success')
+        await loadSales(); await loadProducts()
+        handleSelectProduct(selectedProduct.id)
+        setCustomerName(''); setQuantity(1); setSelectedProduct(null)
+        setSelectedProductId(''); setUnitPrice(''); setSelectedVariationIndex(''); setSelectedSize('')
+      } catch (error) { console.error(error); showToast('Erro ao cadastrar venda', 'error') }
+      setLoadingSale(false)
+    })
   }
 
   async function handleUndoSale(sale) {
     if (sale.status === 'canceled') return
-    if (!confirm('Deseja desfazer esta venda? O estoque será devolvido.')) return
-    try {
-      const productRef = doc(db, 'stores', storeSlug, 'products', sale.productId)
-      const productSnap = await getDoc(productRef)
-      if (!productSnap.exists()) { alert('Produto não encontrado.'); return }
-      const product = { id: productSnap.id, ...productSnap.data() }
-      let updatedProduct = { ...product }
-      if (sale.variationIndex === 'main') {
-        updatedProduct.sizeStocks = { ...(product.sizeStocks || {}),
-          [sale.size]: Number(product.sizeStocks?.[sale.size] || 0) + Number(sale.quantity || 0) }
-      } else {
-        updatedProduct.variations = (product.variations || []).map((variation, index) => {
-          if (index !== Number(sale.variationIndex)) return variation
-          return { ...variation, sizeStocks: { ...(variation.sizeStocks || {}),
-            [sale.size]: Number(variation.sizeStocks?.[sale.size] || 0) + Number(sale.quantity || 0) } }
-        })
-      }
-      const totalStock = calculateProductTotalStock(updatedProduct)
-      await updateDoc(productRef, { ...updatedProduct, stock: totalStock, available: totalStock > 0 })
-      await updateDoc(doc(db, 'stores', storeSlug, 'sales', sale.id), { status: 'canceled', canceledAt: new Date() })
-      alert('Venda desfeita com sucesso!')
-      await loadSales(); await loadProducts()
-    } catch (error) { console.error(error); alert('Erro ao desfazer venda') }
+    showDialog('Deseja desfazer esta venda? O estoque será devolvido.', async () => {
+      closeDialog()
+      try {
+        const productRef = doc(db, 'stores', storeSlug, 'products', sale.productId)
+        const productSnap = await getDoc(productRef)
+        if (!productSnap.exists()) { showToast('Produto não encontrado.', 'error'); return }
+        const product = { id: productSnap.id, ...productSnap.data() }
+        let updatedProduct = { ...product }
+        if (sale.variationIndex === 'main') {
+          updatedProduct.sizeStocks = { ...(product.sizeStocks || {}),
+            [sale.size]: Number(product.sizeStocks?.[sale.size] || 0) + Number(sale.quantity || 0) }
+        } else {
+          updatedProduct.variations = (product.variations || []).map((variation, index) => {
+            if (index !== Number(sale.variationIndex)) return variation
+            return { ...variation, sizeStocks: { ...(variation.sizeStocks || {}),
+              [sale.size]: Number(variation.sizeStocks?.[sale.size] || 0) + Number(sale.quantity || 0) } }
+          })
+        }
+        const totalStock = calculateProductTotalStock(updatedProduct)
+        await updateDoc(productRef, { ...updatedProduct, stock: totalStock, available: totalStock > 0 })
+        await updateDoc(doc(db, 'stores', storeSlug, 'sales', sale.id), { status: 'canceled', canceledAt: new Date() })
+        showToast('Venda desfeita com sucesso!', 'success')
+        await loadSales(); await loadProducts()
+      } catch (error) { console.error(error); showToast('Erro ao desfazer venda', 'error') }
+    })
   }
 
   function formatDate(createdAt) {
@@ -266,6 +289,9 @@ function AdminSales() {
           </section>
         </div>
       </div>
+
+      <Toast message={toast.message} type={toast.type} />
+      <AdminDialog message={dialog.message} onConfirm={dialog.onConfirm} onCancel={closeDialog} />
     </AdminLayout>
   )
 }
