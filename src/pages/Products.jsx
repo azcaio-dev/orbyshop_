@@ -235,7 +235,13 @@ function Products() {
           ) : (
             (() => {
               const displayed = selectedSizeFilter
-                ? filteredProducts.filter((p) => p.sizes?.includes(selectedSizeFilter))
+                ? filteredProducts.filter((p) => {
+                    if (!p.sizes?.includes(selectedSizeFilter)) return false
+                    // Se não tem controle de estoque por tamanho, confia no available
+                    if (!p.sizeStocks || Object.keys(p.sizeStocks).length === 0) return p.available
+                    // Verifica se o tamanho específico tem estoque > 0
+                    return Number(p.sizeStocks[selectedSizeFilter] || 0) > 0
+                  })
                 : filteredProducts
 
               return displayed.length > 0 ? (
