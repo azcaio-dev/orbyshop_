@@ -15,17 +15,22 @@ function AdminSales() {
   const [salesFilter, setSalesFilter] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [selectedProductId, setSelectedProductId] = useState('')
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [selectedVariationIndex, setSelectedVariationIndex] = useState('')
-  const [selectedSize, setSelectedSize] = useState('')
-  const [customerName, setCustomerName] = useState('')
-  const [quantity, setQuantity] = useState(1)
-  const [unitPrice, setUnitPrice] = useState('')
   const [loadingSale, setLoadingSale] = useState(false)
   const [toast, setToast] = useState({ message: '', type: 'success' })
   const [dialog, setDialog] = useState({ message: '', onConfirm: null })
   const isPro = hasFeature(store, 'sales')
+
+  // ── Formulário de item ──────────────────────────────────────
+  const [customerName, setCustomerName] = useState('')
+  const [selectedProductId, setSelectedProductId] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [selectedVariationIndex, setSelectedVariationIndex] = useState('')
+  const [selectedSize, setSelectedSize] = useState('')
+  const [quantity, setQuantity] = useState(1)
+  const [unitPrice, setUnitPrice] = useState('')
+
+  // ── Carrinho de venda (múltiplos itens) ─────────────────────
+  const [saleItems, setSaleItems] = useState([])
 
   function showToast(message, type = 'success') {
     setToast({ message, type })
@@ -39,7 +44,7 @@ function AdminSales() {
   async function loadSales() {
     try {
       const snapshot = await getDocs(collection(db, 'stores', storeSlug, 'sales'))
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
       data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
       setSales(data)
     } catch (error) { console.error(error) }
@@ -47,8 +52,7 @@ function AdminSales() {
 
   async function loadProducts() {
     const snapshot = await getDocs(collection(db, 'stores', storeSlug, 'products'))
-    const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-    // ✅ Ordenação alfabética
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
     data.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
     setProducts(data)
   }
@@ -76,56 +80,109 @@ function AdminSales() {
     return mainStock + variationsStock
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    console.log('🔥 submit chamado')
-  console.log('📦 selectedProduct:', selectedProduct)
-  console.log('📦 selectedSize:', selectedSize)
-  console.log('📦 selectedVariationIndex:', selectedVariationIndex)
-    if (!selectedProduct) return
-    if (!selectedSize || selectedVariationIndex === '') {
-      showToast('Selecione a cor/variação e o tamanho.', 'warning'); return
-    }
+  // ── Adiciona item ao carrinho de venda ──────────────────────
+  function handleAddItem() {
+    if (!selectedProduct) { showToast('Selecione um produto.', 'warning'); return }
+    if (selectedVariationIndex === '') { showToast('Selecione a cor/variação.', 'warning'); return }
+    if (!selectedSize) { showToast('Selecione o tamanho.', 'warning'); return }
+    if (!unitPrice) { showToast('Informe o preço da venda.', 'warning'); return }
+
     const availableStock = getAvailableStock()
     if (Number(quantity) > availableStock) {
       showToast(`Estoque insuficiente. Disponível: ${availableStock}`, 'warning'); return
     }
-    showDialog('Confirmar cadastro desta venda?', async () => {
-      console.log('✅ confirmou o dialog')
+
+    const variationName = selectedVariationIndex === 'main'
+      ? selectedProduct.mainColor || 'Principal'
+      : selectedProduct.variations?.[Number(selectedVariationIndex)]?.colorName
+
+    const newItem = {
+      productId: selectedProduct.id,
+      productName: selectedProduct.name,
+      product: selectedProduct,
+      variationIndex: selectedVariationIndex,
+      variationName,
+      size: selectedSize,
+      quantity: Number(quantity),
+      unitPrice: Number(unitPrice),
+      unitCost: Number(selectedProduct.costPrice || 0),
+      total: Number(unitPrice) * Number(quantity),
+      profit: (Number(unitPrice) - Number(selectedProduct.costPrice || 0)) * Number(quantity),
+    }
+
+    setSaleItems((prev) => [...prev, newItem])
+
+    // Limpa o formulário de item
+    setSelectedProductId('')
+    setSelectedProduct(null)
+    setSelectedVariationIndex('')
+    setSelectedSize('')
+    setQuantity(1)
+    setUnitPrice('')
+
+    showToast('Item adicionado!', 'success')
+  }
+
+  function removeItem(index) {
+    setSaleItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // ── Confirma a venda com todos os itens ─────────────────────
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (saleItems.length === 0) { showToast('Adicione pelo menos um produto.', 'warning'); return }
+
+    showDialog(`Confirmar venda com ${saleItems.length} item(s)?`, async () => {
       closeDialog()
       setLoadingSale(true)
       try {
-        const total = Number(unitPrice) * Number(quantity)
-        const unitCost = Number(selectedProduct.costPrice || 0)
-        const profit = (Number(unitPrice) - unitCost) * Number(quantity)
-        await addDoc(collection(db, 'stores', storeSlug, 'sales'), {
-          customerName, productId: selectedProduct.id, productName: selectedProduct.name,
-          variationIndex: selectedVariationIndex,
-          variationName: selectedVariationIndex === 'main'
-            ? selectedProduct.mainColor || 'Principal'
-            : selectedProduct.variations?.[Number(selectedVariationIndex)]?.colorName,
-          size: selectedSize, status: 'active', quantity: Number(quantity),
-          unitPrice: Number(unitPrice), unitCost, total, profit, createdAt: new Date(),
-        })
-        let updatedProduct = { ...selectedProduct }
-        if (selectedVariationIndex === 'main') {
-          updatedProduct.sizeStocks = { ...(selectedProduct.sizeStocks || {}),
-            [selectedSize]: Number(selectedProduct.sizeStocks?.[selectedSize] || 0) - Number(quantity) }
-        } else {
-          updatedProduct.variations = (selectedProduct.variations || []).map((variation, index) => {
-            if (index !== Number(selectedVariationIndex)) return variation
-            return { ...variation, sizeStocks: { ...(variation.sizeStocks || {}),
-              [selectedSize]: Number(variation.sizeStocks?.[selectedSize] || 0) - Number(quantity) } }
+        for (const item of saleItems) {
+          await addDoc(collection(db, 'stores', storeSlug, 'sales'), {
+            customerName,
+            productId: item.productId,
+            productName: item.productName,
+            variationIndex: item.variationIndex,
+            variationName: item.variationName,
+            size: item.size,
+            status: 'active',
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            unitCost: item.unitCost,
+            total: item.total,
+            profit: item.profit,
+            createdAt: new Date(),
+          })
+
+          // Atualiza estoque de cada produto
+          let updatedProduct = { ...item.product }
+          if (item.variationIndex === 'main') {
+            updatedProduct.sizeStocks = {
+              ...(item.product.sizeStocks || {}),
+              [item.size]: Number(item.product.sizeStocks?.[item.size] || 0) - item.quantity,
+            }
+          } else {
+            updatedProduct.variations = (item.product.variations || []).map((variation, index) => {
+              if (index !== Number(item.variationIndex)) return variation
+              return {
+                ...variation,
+                sizeStocks: {
+                  ...(variation.sizeStocks || {}),
+                  [item.size]: Number(variation.sizeStocks?.[item.size] || 0) - item.quantity,
+                },
+              }
+            })
+          }
+          const totalStock = calculateProductTotalStock(updatedProduct)
+          await updateDoc(doc(db, 'stores', storeSlug, 'products', item.productId), {
+            ...updatedProduct, stock: totalStock, available: totalStock > 0,
           })
         }
-        const totalStock = calculateProductTotalStock(updatedProduct)
-        await updateDoc(doc(db, 'stores', storeSlug, 'products', selectedProduct.id),
-          { ...updatedProduct, stock: totalStock, available: totalStock > 0 })
+
         showToast('Venda cadastrada com sucesso!', 'success')
-        await loadSales(); await loadProducts()
-        handleSelectProduct(selectedProduct.id)
-        setCustomerName(''); setQuantity(1); setSelectedProduct(null)
-        setSelectedProductId(''); setUnitPrice(''); setSelectedVariationIndex(''); setSelectedSize('')
+        setSaleItems([])
+        setCustomerName('')
+        await loadSales()
+        await loadProducts()
       } catch (error) { console.error(error); showToast('Erro ao cadastrar venda', 'error') }
       setLoadingSale(false)
     })
@@ -182,6 +239,9 @@ function AdminSales() {
     return true
   })
 
+  const saleTotal = saleItems.reduce((acc, item) => acc + item.total, 0)
+  const saleProfit = saleItems.reduce((acc, item) => acc + item.profit, 0)
+
   return (
     <AdminLayout>
       <div className="dash-content">
@@ -192,68 +252,120 @@ function AdminSales() {
 
         <div className="orby-admin-layout">
           <form onSubmit={handleSubmit} className="orby-admin-form">
+
             <label>Cliente</label>
             <input type="text" placeholder="Nome do cliente" value={customerName}
               onChange={(e) => setCustomerName(e.target.value)} />
 
-            <label>Produto</label>
-            <select value={selectedProductId} onChange={(e) => handleSelectProduct(e.target.value)}>
-              <option value="">Selecione um produto</option>
-              {[...products]
-                .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
-                .map((product) => (
+            {/* ── Seleção de item ── */}
+            <div style={{ borderTop: '0.5px solid #e5e7eb', paddingTop: 12, marginTop: 4 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#534ab7', margin: '0 0 10px' }}>
+                Adicionar produto
+              </p>
+
+              <label>Produto</label>
+              <select value={selectedProductId} onChange={(e) => handleSelectProduct(e.target.value)}>
+                <option value="">Selecione um produto</option>
+                {products.map((product) => (
                   <option key={product.id} value={product.id}>{product.name}</option>
-                ))
-              }
-            </select>
+                ))}
+              </select>
 
-            {selectedProduct && (
-              <>
-                <label>Cor / Variação</label>
-                <select value={selectedVariationIndex}
-                  onChange={(e) => { setSelectedVariationIndex(e.target.value); setSelectedSize('') }} >
-                  <option value="">Selecione uma opção</option>
-                  <option value="main">{selectedProduct.mainColor || 'Principal'}</option>
-                  {selectedProduct.variations?.map((variation, index) => (
-                    <option key={index} value={index}>{variation.colorName}</option>
-                  ))}
-                </select>
-              </>
-            )}
+              {selectedProduct && (
+                <>
+                  <label style={{ marginTop: 10 }}>Cor / Variação</label>
+                  <select value={selectedVariationIndex}
+                    onChange={(e) => { setSelectedVariationIndex(e.target.value); setSelectedSize('') }}>
+                    <option value="">Selecione uma opção</option>
+                    <option value="main">{selectedProduct.mainColor || 'Principal'}</option>
+                    {selectedProduct.variations?.map((variation, index) => (
+                      <option key={index} value={index}>{variation.colorName}</option>
+                    ))}
+                  </select>
+                </>
+              )}
 
-            {selectedProduct && selectedVariationIndex !== '' && (
-              <>
-                <label>Tamanho</label>
-                <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)} >
-                  <option value="">Selecione um tamanho</option>
-                  {(selectedVariationIndex === 'main'
-                    ? selectedProduct.sizes
-                    : selectedProduct.variations?.[Number(selectedVariationIndex)]?.sizes
-                  )?.map((size) => <option key={size} value={size}>{size}</option>)}
-                </select>
-              </>
-            )}
+              {selectedProduct && selectedVariationIndex !== '' && (
+                <>
+                  <label style={{ marginTop: 10 }}>Tamanho</label>
+                  <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
+                    <option value="">Selecione um tamanho</option>
+                    {(selectedVariationIndex === 'main'
+                      ? selectedProduct.sizes
+                      : selectedProduct.variations?.[Number(selectedVariationIndex)]?.sizes
+                    )?.map((size) => <option key={size} value={size}>{size}</option>)}
+                  </select>
+                </>
+              )}
 
-            <label>Quantidade</label>
-            <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)}  />
+              <label style={{ marginTop: 10 }}>Quantidade</label>
+              <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
 
-            <label>Preço da venda</label>
-            <input type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)}  />
+              <label style={{ marginTop: 10 }}>Preço da venda</label>
+              <input type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
 
-            {selectedProduct && (
-              <div className="sale-preview">
-                <p>Estoque disponível: {getAvailableStock()}</p>
-                <p>Custo unitário: {fmt(selectedProduct.costPrice || 0)}</p>
-                <p>Total: {fmt(Number(unitPrice) * Number(quantity))}</p>
-                <p>Lucro estimado: {fmt((Number(unitPrice) - Number(selectedProduct.costPrice || 0)) * Number(quantity))}</p>
+              {selectedProduct && selectedSize && (
+                <p style={{ fontSize: 12, color: '#6b7280', margin: '6px 0 0' }}>
+                  Estoque disponível: {getAvailableStock()}
+                </p>
+              )}
+
+              <button type="button" onClick={handleAddItem}
+                style={{ marginTop: 12, background: '#eeedfe', color: '#534ab7',
+                  border: '0.5px solid #afa9ec', borderRadius: 10, padding: '10px 14px',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%' }}>
+                + Adicionar item
+              </button>
+            </div>
+
+            {/* ── Carrinho de itens ── */}
+            {saleItems.length > 0 && (
+              <div style={{ borderTop: '0.5px solid #e5e7eb', paddingTop: 12, marginTop: 4 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', margin: '0 0 10px' }}>
+                  Itens da venda
+                </p>
+
+                {saleItems.map((item, index) => (
+                  <div key={index} style={{ display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'flex-start', padding: '8px 0',
+                    borderBottom: '0.5px solid #f3f4f6', gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#111827' }}>{item.productName}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
+                        {item.variationName} / {item.size} · Qtd: {item.quantity} · {fmt(item.unitPrice)}
+                      </p>
+                      <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 600, color: '#534ab7' }}>
+                        {fmt(item.total)}
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => removeItem(index)}
+                      style={{ background: '#fee2e2', border: 'none', borderRadius: 6,
+                        color: '#b91c1c', fontSize: 11, padding: '4px 8px', cursor: 'pointer', flexShrink: 0 }}>
+                      Remover
+                    </button>
+                  </div>
+                ))}
+
+                <div style={{ marginTop: 12, padding: '10px 12px', background: '#f6f7fb',
+                  borderRadius: 10, display: 'flex', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>Total da venda</p>
+                    <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>{fmt(saleTotal)}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>Lucro estimado</p>
+                    <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f6e56' }}>{fmt(saleProfit)}</p>
+                  </div>
+                </div>
               </div>
             )}
 
-            <button type="submit" disabled={loadingSale}>
-              {loadingSale ? 'Salvando...' : 'Cadastrar venda'}
+            <button type="submit" disabled={loadingSale || saleItems.length === 0}>
+              {loadingSale ? 'Salvando...' : `Confirmar venda${saleItems.length > 1 ? ` (${saleItems.length} itens)` : ''}`}
             </button>
           </form>
 
+          {/* ── Lista de vendas ── */}
           <section className="orby-admin-list">
             <div className="orby-list-header">
               <h2>Últimas vendas</h2>
