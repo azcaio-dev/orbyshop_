@@ -10,6 +10,7 @@ function AdminStock() {
   const { store, loading: storeLoading, storeSlug } = useStore()
   const [products, setProducts] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(true)
+  const [search, setSearch] = useState('')
   const isPro = hasFeature(store, 'stock')
 
   useEffect(() => {
@@ -54,6 +55,10 @@ function AdminStock() {
   if (storeLoading || !store) return <AdminLayout><div className="dash-loading">Carregando...</div></AdminLayout>
   if (!isPro) return <AdminLayout><UpgradePlan /></AdminLayout>
 
+  const filteredProducts = products.filter((p) =>
+    (p.name || '').toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <AdminLayout>
       <div className="dash-content">
@@ -65,13 +70,42 @@ function AdminStock() {
         <div className="dash-sales-section">
           <div className="dash-sales-header">
             <p className="dash-section-title" style={{ marginBottom: 0 }}>Produtos em estoque</p>
-            <span className="dash-sales-count">{products.length} produto(s)</span>
+            <span className="dash-sales-count">{filteredProducts.length} produto(s)</span>
+          </div>
+
+          {/* ── Busca ── */}
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            <i className="ti ti-search" style={{
+              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+              color: '#9ca3af', fontSize: 16, pointerEvents: 'none'
+            }} />
+            <input
+              type="text"
+              placeholder="Buscar produto..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%', padding: '9px 12px 9px 36px',
+                border: '0.5px solid #e5e7eb', borderRadius: 10,
+                fontSize: 13, outline: 'none', fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} style={{
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#9ca3af', fontSize: 14, padding: 0,
+              }}>✕</button>
+            )}
           </div>
 
           {loadingProducts ? (
             <p style={{ padding: '16px 0', color: '#6b7280', fontSize: 14 }}>Carregando estoque...</p>
+          ) : filteredProducts.length === 0 ? (
+            <p style={{ padding: '16px 0', color: '#9ca3af', fontSize: 14 }}>Nenhum produto encontrado.</p>
           ) : (
-            products.map((product) => {
+            filteredProducts.map((product) => {
               const stock = calculateTotalStock(product)
               const hasVariations = product.variations?.length > 0
               return (
