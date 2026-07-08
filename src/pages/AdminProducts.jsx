@@ -28,7 +28,6 @@ function AdminProducts() {
   const [sizeType, setSizeType] = useState('letter')
   const [sizes, setSizes] = useState([])
   const [costPrice, setCostPrice] = useState('')
-  const [stock, setStock] = useState('')
   const [sizeStocks, setSizeStocks] = useState({})
   const [variationSizeStocks, setVariationSizeStocks] = useState({})
   const [showVariationForm, setShowVariationForm] = useState(false)
@@ -137,8 +136,7 @@ function AdminProducts() {
   function clearForm() {
     setName(''); setOldPrice(''); setPrice(''); setDescription(''); setMainColor('')
     setProductImages([null]); setEditingId(null); setBrand(''); setCategory('')
-    setProductSection(''); setSizeType('letter'); setSizes([]); setCostPrice('')
-    setStock(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
+    setProductSection(''); setSizeType('letter'); setSizes([]); setCostPrice(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
     setVariationFile(null); setVariationSizeType('letter'); setVariationSizes([])
     setVariationSizeStocks({}); setVariations([])
   }
@@ -148,7 +146,7 @@ function AdminProducts() {
     setPrice(product.price || ''); setDescription(product.description || ''); setMainColor(product.mainColor || '')
     setBrand(product.brand || ''); setCategory(product.category || ''); setProductSection(product.productSection || '')
     setSizeType(product.sizeType || 'letter'); setSizes(product.sizes || []); setCostPrice(product.costPrice || '')
-    setStock(product.stock || ''); setSizeStocks(product.sizeStocks || {}); setVariations(product.variations || [])
+    setSizeStocks(product.sizeStocks || {}); setVariations(product.variations || [])
     setShowVariationForm(false); setVariationColorName(''); setVariationFile(null)
     setVariationSizeType('letter'); setVariationSizes([]); setVariationSizeStocks({}); setProductImages([null])
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -218,10 +216,7 @@ function AdminProducts() {
             <input type="number" placeholder="Preço atual" value={price} onChange={(e) => setPrice(e.target.value)} required />
 
             {isPro && (
-              <>
                 <input type="number" placeholder="Preço de custo" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
-                <input type="number" placeholder="Estoque" value={stock} onChange={(e) => setStock(e.target.value)} />
-              </>
             )}
 
             {store.menu?.showBrands !== false && (
