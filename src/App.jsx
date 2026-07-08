@@ -8,7 +8,8 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminSales from './pages/AdminSales'
 import AdminStock from './pages/AdminStock'
 import AdminFinancial from './pages/AdminFinancial'
-import Footer from "./components/footer.jsx";
+import AdminVendedores from './pages/AdminVendedores'
+import Footer from "./components/footer.jsx"
 import Products from './pages/Products'
 import OrbyAdminDashboard from './pages/OrbyAdminDashboard'
 import OrbyCreateStore from './pages/OrbyCreateStore'
@@ -19,10 +20,9 @@ import ScrollToTop from './components/ScrollToTop'
 function App() {
   return (
     <BrowserRouter>
-    <ScrollToTop />
-    
-      <Routes>
+      <ScrollToTop />
 
+      <Routes>
         <Route path="/orby-admin/dashboard" element={<OrbyAdminDashboard />} />
         <Route path="/orby-admin/criar-loja" element={<OrbyCreateStore />} />
         <Route path="/orby-admin/editar-loja/:storeSlug" element={<OrbyEditStore />} />
@@ -45,12 +45,13 @@ function App() {
         <Route path="/admin/:storeSlug/vendas" element={<AdminSales />} />
         <Route path="/admin/:storeSlug/estoque" element={<AdminStock />} />
         <Route path="/admin/:storeSlug/financeiro" element={<AdminFinancial />} />
+        <Route path="/admin/:storeSlug/vendedores" element={<AdminVendedores />} />
       </Routes>
 
       {!window.location.pathname.startsWith('/admin') &&
-      !window.location.pathname.startsWith('/orby-admin') &&
-      window.location.pathname !== '/' && <Footer />}
-     </BrowserRouter>
+       !window.location.pathname.startsWith('/orby-admin') &&
+       window.location.pathname !== '/' && <Footer />}
+    </BrowserRouter>
   )
 }
 

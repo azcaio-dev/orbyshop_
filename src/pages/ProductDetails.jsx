@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { useCart } from '../context/CartContext'
 import CartDrawer from '../components/CartDrawer'
@@ -9,18 +9,13 @@ import Toast from '../components/Toast'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 
-// ✅ Retorna os tamanhos com estoque > 0 para uma variação ou produto principal
 function getSizesWithStock(product, variation) {
   const sizes = variation?.sizes || product.sizes || []
   const sizeStocks = variation?.sizeStocks || product.sizeStocks
-
-  // Se não há controle de estoque por tamanho, mostra todos
   if (!sizeStocks || Object.keys(sizeStocks).length === 0) return sizes
-
   return sizes.filter((size) => Number(sizeStocks[size] || 0) > 0)
 }
 
-// ✅ Verifica se um tamanho específico tem estoque
 function sizeHasStock(product, variation, size) {
   const sizeStocks = variation?.sizeStocks || product.sizeStocks
   if (!sizeStocks || Object.keys(sizeStocks).length === 0) return true
@@ -29,7 +24,7 @@ function sizeHasStock(product, variation, size) {
 
 function ProductDetails() {
   const navigate = useNavigate()
-  const { cart, addToCart } = useCart()
+  const { cart, addToCart, vendedorSlug } = useCart()
   const { id } = useParams()
   const { store, loading: storeLoading, storeSlug } = useStore()
 
@@ -43,6 +38,7 @@ function ProductDetails() {
   const [openCart, setOpenCart] = useState(false)
   const [added, setAdded] = useState(false)
   const [toast, setToast] = useState({ message: '', type: 'success' })
+  const [vendedorPhone, setVendedorPhone] = useState(null)
 
   const cartQuantity = cart.reduce((acc, item) => acc + item.quantity, 0)
 
@@ -50,6 +46,20 @@ function ProductDetails() {
     setToast({ message, type })
     setTimeout(() => setToast({ message: '', type: 'success' }), 2500)
   }
+
+  // Busca o WhatsApp do vendedor ativo
+  useEffect(() => {
+    if (!vendedorSlug || !storeSlug) return
+    async function loadVendedor() {
+      try {
+        const snapshot = await getDocs(
+          query(collection(db, 'stores', storeSlug, 'vendedores'), where('slug', '==', vendedorSlug))
+        )
+        if (!snapshot.empty) setVendedorPhone(snapshot.docs[0].data().whatsapp)
+      } catch { /* usa número da loja como fallback */ }
+    }
+    loadVendedor()
+  }, [vendedorSlug, storeSlug])
 
   useEffect(() => {
     if (product) document.title = `${product.name} | ${store.name}`
@@ -69,15 +79,9 @@ function ProductDetails() {
           setSelectedImage(productImages[0] || '')
           setSelectedVariation(null)
           setSelectedSize('')
-        } else {
-          setProduct(null)
-        }
-      } catch (error) {
-        console.error('Erro ao carregar produto:', error)
-        setProduct(null)
-      } finally {
-        setLoading(false)
-      }
+        } else { setProduct(null) }
+      } catch (error) { console.error(error); setProduct(null) }
+      finally { setLoading(false) }
     }
     loadProduct()
   }, [storeSlug, id])
@@ -105,19 +109,16 @@ function ProductDetails() {
   const productImages = product.images?.length > 0
     ? product.images : [product.image, product.image2].filter(Boolean)
 
-  const formattedPrice = Number(product.price).toLocaleString('pt-BR', {
-    style: 'currency', currency: 'BRL',
-  })
+  const formattedPrice = Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-  // ✅ Apenas tamanhos com estoque disponível
   const availableSizes = getSizesWithStock(product, selectedVariation)
-
-  // Todos os tamanhos (para mostrar os esgotados riscados)
   const allSizes = selectedVariation?.sizes || product.sizes || []
   const outOfStockSizes = allSizes.filter((size) => !availableSizes.includes(size))
 
   const selectedColor = selectedVariation?.colorName || product.mainColor || '-'
-  const phone = String(store.whatsapp || '').replace(/\D/g, '')
+
+  // ✅ Usa número do vendedor se disponível, senão usa o da loja
+  const phone = vendedorPhone || String(store.whatsapp || '').replace(/\D/g, '')
 
   const whatsappMessage = `${store.checkout?.messageIntro || 'Olá! Tenho interesse nesse produto:'}
 
@@ -127,10 +128,6 @@ Cor: ${selectedColor}
 Tamanho: ${selectedSize || '-'}`
 
   const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}`
-
-  // ✅ Produto disponível apenas se tiver estoque real no tamanho selecionado
-  const isProductAvailable = product.available &&
-    (!selectedSize || sizeHasStock(product, selectedVariation, selectedSize))
 
   return (
     <>
@@ -152,7 +149,6 @@ Tamanho: ${selectedSize || '-'}`
               </span>
             )}
           </div>
-
           <div className="thumbs">
             {productImages.map((image, index) => (
               <img key={index} src={image} alt={product.name} loading="lazy"
@@ -167,7 +163,6 @@ Tamanho: ${selectedSize || '-'}`
 
         <section className="product-content">
           <h1>{product.name}</h1>
-
           <div className="product-price-box">
             {product.productSection === 'outlet' && product.oldPrice && (
               <span className="product-old-price">
@@ -206,15 +201,10 @@ Tamanho: ${selectedSize || '-'}`
           <div className="product-sizes">
             <h3>Tamanhos disponíveis</h3>
             <div className="size-options">
-              {/* ✅ Tamanhos com estoque */}
               {availableSizes.map((size) => (
-                <button key={size}
-                  className={selectedSize === size ? 'selected' : ''}
-                  onClick={() => setSelectedSize(size)}>
-                  {size}
-                </button>
+                <button key={size} className={selectedSize === size ? 'selected' : ''}
+                  onClick={() => setSelectedSize(size)}>{size}</button>
               ))}
-              {/* ✅ Tamanhos sem estoque — riscados e desabilitados */}
               {outOfStockSizes.map((size) => (
                 <button key={size} disabled
                   style={{ opacity: 0.35, cursor: 'not-allowed', textDecoration: 'line-through' }}>
@@ -234,23 +224,10 @@ Tamanho: ${selectedSize || '-'}`
               className={`add-cart-button ${added ? 'added' : ''}`}
               disabled={!product.available || availableSizes.length === 0}
               onClick={() => {
-                if (!product.available || availableSizes.length === 0) {
-                  showToast('Produto indisponível', 'warning')
-                  return
-                }
-                if (!selectedSize) {
-                  showToast('Selecione um tamanho', 'warning')
-                  return
-                }
-                // ✅ Verifica estoque do tamanho selecionado antes de adicionar
-                if (!sizeHasStock(product, selectedVariation, selectedSize)) {
-                  showToast('Este tamanho está esgotado', 'warning')
-                  return
-                }
-                if (product.variations?.length > 0 && !selectedVariation && !product.mainColor) {
-                  showToast('Selecione uma cor', 'warning')
-                  return
-                }
+                if (!product.available || availableSizes.length === 0) { showToast('Produto indisponível', 'warning'); return }
+                if (!selectedSize) { showToast('Selecione um tamanho', 'warning'); return }
+                if (!sizeHasStock(product, selectedVariation, selectedSize)) { showToast('Este tamanho está esgotado', 'warning'); return }
+                if (product.variations?.length > 0 && !selectedVariation && !product.mainColor) { showToast('Selecione uma cor', 'warning'); return }
                 addToCart({
                   ...product,
                   image: selectedImage || productImages[0],
@@ -263,9 +240,7 @@ Tamanho: ${selectedSize || '-'}`
                 setTimeout(() => setAdded(false), 1000)
               }}
             >
-              {!product.available || availableSizes.length === 0
-                ? 'Indisponível'
-                : added ? '✔ Adicionado' : 'Adicionar'}
+              {!product.available || availableSizes.length === 0 ? 'Indisponível' : added ? '✔ Adicionado' : 'Adicionar'}
             </button>
 
             {product.available && availableSizes.length > 0 && (

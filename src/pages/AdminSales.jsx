@@ -136,22 +136,28 @@ function AdminSales() {
       closeDialog()
       setLoadingSale(true)
       try {
-        for (const item of saleItems) {
-          await addDoc(collection(db, 'stores', storeSlug, 'sales'), {
-            customerName,
+        await addDoc(collection(db, 'stores', storeSlug, 'sales'), {
+          customerName,
+          status: 'active',
+          total: saleTotal,
+          profit: saleProfit,
+          createdAt: new Date(),
+          items: saleItems.map(item => ({
             productId: item.productId,
             productName: item.productName,
             variationIndex: item.variationIndex,
             variationName: item.variationName,
             size: item.size,
-            status: 'active',
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             unitCost: item.unitCost,
             total: item.total,
             profit: item.profit,
-            createdAt: new Date(),
-          })
+          })),
+        })
+
+        // Atualiza estoque normalmente
+        for (const item of saleItems) {
 
           // Atualiza estoque de cada produto
           let updatedProduct = { ...item.product }
@@ -190,30 +196,79 @@ function AdminSales() {
 
   async function handleUndoSale(sale) {
     if (sale.status === 'canceled') return
+
     showDialog('Deseja desfazer esta venda? O estoque será devolvido.', async () => {
       closeDialog()
+
       try {
-        const productRef = doc(db, 'stores', storeSlug, 'products', sale.productId)
-        const productSnap = await getDoc(productRef)
-        if (!productSnap.exists()) { showToast('Produto não encontrado.', 'error'); return }
-        const product = { id: productSnap.id, ...productSnap.data() }
-        let updatedProduct = { ...product }
-        if (sale.variationIndex === 'main') {
-          updatedProduct.sizeStocks = { ...(product.sizeStocks || {}),
-            [sale.size]: Number(product.sizeStocks?.[sale.size] || 0) + Number(sale.quantity || 0) }
-        } else {
-          updatedProduct.variations = (product.variations || []).map((variation, index) => {
-            if (index !== Number(sale.variationIndex)) return variation
-            return { ...variation, sizeStocks: { ...(variation.sizeStocks || {}),
-              [sale.size]: Number(variation.sizeStocks?.[sale.size] || 0) + Number(sale.quantity || 0) } }
+        // Compatibilidade:
+        // venda antiga => [sale]
+        // venda nova => sale.items
+        const items = sale.items || [sale]
+
+        for (const item of items) {
+          const productRef = doc(db, 'stores', storeSlug, 'products', item.productId)
+          const productSnap = await getDoc(productRef)
+
+          if (!productSnap.exists()) continue
+
+          const product = {
+            id: productSnap.id,
+            ...productSnap.data()
+          }
+
+          let updatedProduct = { ...product }
+
+          if (item.variationIndex === 'main') {
+            updatedProduct.sizeStocks = {
+              ...(product.sizeStocks || {}),
+              [item.size]:
+                Number(product.sizeStocks?.[item.size] || 0) +
+                Number(item.quantity || 0),
+            }
+          } else {
+            updatedProduct.variations = (product.variations || []).map(
+              (variation, index) => {
+                if (index !== Number(item.variationIndex)) return variation
+
+                return {
+                  ...variation,
+                  sizeStocks: {
+                    ...(variation.sizeStocks || {}),
+                    [item.size]:
+                      Number(variation.sizeStocks?.[item.size] || 0) +
+                      Number(item.quantity || 0),
+                  },
+                }
+              }
+            )
+          }
+
+          const totalStock = calculateProductTotalStock(updatedProduct)
+
+          await updateDoc(productRef, {
+            ...updatedProduct,
+            stock: totalStock,
+            available: totalStock > 0,
           })
         }
-        const totalStock = calculateProductTotalStock(updatedProduct)
-        await updateDoc(productRef, { ...updatedProduct, stock: totalStock, available: totalStock > 0 })
-        await updateDoc(doc(db, 'stores', storeSlug, 'sales', sale.id), { status: 'canceled', canceledAt: new Date() })
+
+        await updateDoc(
+          doc(db, 'stores', storeSlug, 'sales', sale.id),
+          {
+            status: 'canceled',
+            canceledAt: new Date(),
+          }
+        )
+
         showToast('Venda desfeita com sucesso!', 'success')
-        await loadSales(); await loadProducts()
-      } catch (error) { console.error(error); showToast('Erro ao desfazer venda', 'error') }
+
+        await loadSales()
+        await loadProducts()
+      } catch (error) {
+        console.error(error)
+        showToast('Erro ao desfazer venda', 'error')
+      }
     })
   }
 
@@ -384,28 +439,86 @@ function AdminSales() {
               </div>
             </div>
 
-            {filteredSales.map((sale) => (
-              <div key={sale.id} className="orby-admin-item">
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <strong>{sale.customerName}</strong>
-                  <p>{sale.productName}</p>
-                  <p style={{ fontSize: 12, color: '#6b7280' }}>{formatDate(sale.createdAt)}</p>
-                  <p>Qtd: {sale.quantity} — {sale.variationName} / {sale.size}</p>
-                  <p>Total: {fmt(sale.total || 0)} · Lucro: {fmt(sale.profit || 0)}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-                    <span className={`dash-sale-badge ${sale.status === 'canceled' ? 'dash-sale-badge--canceled' : 'dash-sale-badge--active'}`}>
-                      {sale.status === 'canceled' ? 'Cancelada' : 'Concluída'}
-                    </span>
-                    {sale.status !== 'canceled' && (
-                      <button type="button" className="admin-btn admin-btn--danger-outline"
-                        onClick={() => handleUndoSale(sale)}>
-                        Desfazer
-                      </button>
-                    )}
+            {filteredSales.map((sale) => {
+              const items = sale.items || [sale]
+
+              return (
+                <div key={sale.id} className="orby-admin-item">
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <strong>{sale.customerName || 'Cliente não informado'}</strong>
+
+                    <p style={{ fontSize: 12, color: '#6b7280' }}>
+                      {formatDate(sale.createdAt)}
+                    </p>
+
+                    {items.map((item, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          marginTop: 8,
+                          paddingBottom: 8,
+                          borderBottom:
+                            index < items.length - 1 ? '1px solid #f3f4f6' : 'none',
+                        }}
+                      >
+                        <p style={{ margin: 0, fontWeight: 600 }}>
+                          {item.productName}
+                        </p>
+
+                        <p style={{ margin: '2px 0', fontSize: 13 }}>
+                          Qtd: {item.quantity} — {item.variationName} / {item.size}
+                        </p>
+
+                        <p style={{ margin: '2px 0', fontSize: 13 }}>
+                          {fmt(item.total)} · Lucro: {fmt(item.profit)}
+                        </p>
+                      </div>
+                    ))}
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>Total da venda</span>
+                      <span>{fmt(sale.total || 0)}</span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        marginTop: 10,
+                      }}
+                    >
+                      <span
+                        className={`dash-sale-badge ${
+                          sale.status === 'canceled'
+                            ? 'dash-sale-badge--canceled'
+                            : 'dash-sale-badge--active'
+                        }`}
+                      >
+                        {sale.status === 'canceled' ? 'Cancelada' : 'Concluída'}
+                      </span>
+
+                      {sale.status !== 'canceled' && (
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn--danger-outline"
+                          onClick={() => handleUndoSale(sale)}
+                        >
+                          Desfazer
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </section>
         </div>
       </div>
