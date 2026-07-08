@@ -172,7 +172,18 @@ function AdminFinancial() {
   const monthRevenue = sum(currentMonthSales, 'total')
   const monthProfit = sum(currentMonthSales, 'profit')
   const totalSalesCount = sales.length
-  const avgTicket = totalSalesCount > 0 ? totalRevenue / totalSalesCount : 0
+
+  // Agrupa por cliente + minuto para contar vendas reais (multi-produto)
+  const saleGroups = new Set(
+    sales.map((sale) => {
+      if (!sale.createdAt?.seconds) return sale.id
+      const d = new Date(sale.createdAt.seconds * 1000)
+      const minuto = `${sale.customerName || 'anonimo'}-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}`
+      return minuto
+    })
+  )
+  const realSalesCount = saleGroups.size
+  const avgTicket = realSalesCount > 0 ? totalRevenue / realSalesCount : 0
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
 
   const salesByDay = Array(7).fill(0)
