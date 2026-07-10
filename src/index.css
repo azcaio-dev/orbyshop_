@@ -5305,3 +5305,13 @@ button:hover {
   border-top: 0.5px solid #e5e7eb;
   margin-top: 4px;
 }
+
+.banner-carousel {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  margin: 0 0 20px;
+  position: relative;
+  border-radius: 0;
+  overflow: hidden;
+  margin-top: 70px;
+}

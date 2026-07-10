@@ -254,22 +254,7 @@ const storePrefix = `/${storeSlug}`
         setFilterLabel={setFilterLabel}
       />
 
-      <main className="container">
-        <div className={openSearch ? 'search-open' : ''}></div>
-
-        {loading && (
-          <section className="launch-section">
-            <h2>Carregando produtos...</h2>
-
-            <div className="launch-list">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="launch-card skeleton-card"></div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {!activeFilter && banners.length > 0 && (
+      {!activeFilter && banners.length > 0 && (
           <section className="banner-carousel fade-in">
             <div className="banner-track">
               {banners.map((banner, index) => (
@@ -312,6 +297,21 @@ const storePrefix = `/${storeSlug}`
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+      <main className="container">
+        <div className={openSearch ? 'search-open' : ''}></div>
+
+        {loading && (
+          <section className="launch-section">
+            <h2>Carregando produtos...</h2>
+
+            <div className="launch-list">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="launch-card skeleton-card"></div>
+              ))}
+            </div>
           </section>
         )}
 
