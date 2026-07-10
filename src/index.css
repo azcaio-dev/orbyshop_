@@ -1260,7 +1260,7 @@ body {
 }
 .container {
   min-height: calc(100vh - 260px);
-  padding-top: 90px;
+  padding-top: 0px;
 }
 
 .empty-products {
@@ -5309,7 +5309,7 @@ button:hover {
 .banner-carousel {
   width: 100%;
   aspect-ratio: 16 / 7;
-  margin: 0 0 20px;
+  margin: 0;
   position: relative;
   border-radius: 0;
   overflow: hidden;
