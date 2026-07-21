@@ -6,6 +6,7 @@
   --color-background: #f8f1ec;
   --color-text: #4f3f3c;
   --color-white: #ffffff;
+  --header-height: 70px;
 }
 
 :root {
@@ -5313,7 +5314,6 @@ button:hover {
   position: relative;
   border-radius: 0;
   overflow: hidden;
-  margin-top: 70px;
 }
 
 /* ===== Sobre Nós (seção da Home) ===== */
@@ -5775,4 +5775,8 @@ button:hover {
   .footer-col .footer-line {
     justify-content: flex-start;
   }
+}
+
+.page-content {
+  padding-top: var(--header-height);
 }

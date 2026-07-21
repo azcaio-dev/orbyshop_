@@ -254,7 +254,7 @@ const storePrefix = `/${storeSlug}`
         setActiveFilter={setActiveFilter}
         setFilterLabel={setFilterLabel}
       />
-
+      <div className="page-content">
       {!activeFilter && banners.length > 0 && (
           <section className="banner-carousel fade-in">
             <div className="banner-track">
@@ -300,7 +300,8 @@ const storePrefix = `/${storeSlug}`
             )}
           </section>
         )}
-
+      </div>
+      
       <main className="container">
         <div className={openSearch ? 'search-open' : ''}></div>
 
