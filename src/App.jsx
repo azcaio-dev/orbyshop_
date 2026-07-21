@@ -4,6 +4,7 @@ import ProductDetails from './pages/ProductDetails'
 import AdminLogin from './pages/AdminLogin'
 import AdminProducts from './pages/AdminProducts'
 import AdminBanners from './pages/AdminBanners'
+import AdminSettings from './pages/AdminSettings'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminSales from './pages/AdminSales'
 import AdminStock from './pages/AdminStock'
@@ -42,6 +43,7 @@ function App() {
         <Route path="/admin/:storeSlug/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/:storeSlug/produtos" element={<AdminProducts />} />
         <Route path="/admin/:storeSlug/banners" element={<AdminBanners />} />
+        <Route path="/admin/:storeSlug/configuracoes" element={<AdminSettings />} />
         <Route path="/admin/:storeSlug/vendas" element={<AdminSales />} />
         <Route path="/admin/:storeSlug/estoque" element={<AdminStock />} />
         <Route path="/admin/:storeSlug/financeiro" element={<AdminFinancial />} />

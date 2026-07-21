@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
+import SobreNos from '../components/SobreNos'
 
 function Home() {
   const { cart, addToCart } = useCart()
@@ -685,6 +686,8 @@ const storePrefix = `/${storeSlug}`
             document.body
           )}
       </main>
+
+      {!activeFilter && !loading && <SobreNos store={store} />}
 
       <CartDrawer open={openCart} onClose={() => setOpenCart(false)} />
 

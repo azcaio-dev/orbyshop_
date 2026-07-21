@@ -5315,3 +5315,464 @@ button:hover {
   overflow: hidden;
   margin-top: 70px;
 }
+
+/* ===== Sobre Nós (seção da Home) ===== */
+.sobre-section {
+  padding: 64px 24px;
+  background: #f8f8f8;
+  overflow: hidden; /* impede que a margem do <p> "vaze" pra fora da seção */
+}
+
+.sobre-content {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+.sobre-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.sobre-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.sobre-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #444;
+  white-space: pre-line;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .sobre-content {
+    flex-direction: row;
+    text-align: left;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .sobre-logo {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+  }
+}
+
+/* ===== Footer robusto ===== */
+.footer-social {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.footer-social img {
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+}
+
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.footer-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.footer-horario {
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 32px;
+  padding: 20px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.footer-copy,
+.footer-powered {
+  margin: 0;
+}
+
+/* ===== Sobre Nós (seção da Home) ===== */
+.sobre-section {
+  padding: 64px 24px;
+  background: #f8f8f8;
+  overflow: hidden; /* impede que a margem do <p> "vaze" pra fora da seção */
+}
+
+.sobre-content {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+.sobre-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.sobre-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.sobre-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #444;
+  white-space: pre-line;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .sobre-content {
+    flex-direction: row;
+    text-align: left;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .sobre-logo {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+  }
+}
+
+/* ===== Footer robusto ===== */
+.footer-social {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.footer-social img {
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+}
+
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.footer-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.footer-horario {
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 32px;
+  padding: 20px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.footer-copy,
+.footer-powered {
+  margin: 0;
+}
+
+/* O footer já tem padding-top de 52px internamente (ver regra .footer
+   mais acima), então a margem externa só duplicava o espaçamento —
+   principalmente quando algo (como o Sobre Nós) já vem logo antes dele */
+.footer {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  /* No mobile, o Sobre Nós + Footer já garantem altura suficiente,
+     então o min-height forçado do container só cria espaço vazio */
+  .container {
+    min-height: auto;
+  }
+}
+
+/* ===== Sobre Nós (seção da Home) ===== */
+.sobre-section {
+  position: relative;
+  padding: 72px 24px;
+  background: linear-gradient(180deg, var(--sobre-bg, #f8f1ec) 0%, #ffffff 100%);
+  overflow: hidden; /* impede que a margem do <p> "vaze" pra fora da seção, e contém o círculo decorativo */
+}
+
+.sobre-section::before {
+  content: '';
+  position: absolute;
+  top: -70px;
+  right: -70px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sobre-primary, #c5a19c) 0%, transparent 70%);
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.sobre-section::after {
+  content: '';
+  position: absolute;
+  bottom: -90px;
+  left: -90px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sobre-primary, #c5a19c) 0%, transparent 70%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.sobre-content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+.sobre-logo-wrapper {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  padding: 5px;
+  border: 2px solid var(--sobre-primary, #c5a19c);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.sobre-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.sobre-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--sobre-primary, #c5a19c);
+  margin-bottom: 8px;
+}
+
+.sobre-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 14px;
+  color: #262019;
+}
+
+.sobre-divider {
+  width: 44px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--sobre-primary, #c5a19c);
+  margin: 0 auto 20px;
+}
+
+.sobre-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #55504a;
+  white-space: pre-line;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .sobre-content {
+    flex-direction: row;
+    text-align: left;
+    align-items: flex-start;
+    gap: 44px;
+  }
+
+  .sobre-logo-wrapper {
+    width: 120px;
+    height: 120px;
+  }
+
+  .sobre-divider {
+    margin: 0 0 20px;
+  }
+}
+
+/* ===== Footer robusto ===== */
+.footer-brand {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.footer-logo {
+  display: block;
+  margin: 0 auto 18px;
+}
+
+.footer-social {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.footer-social img {
+  width: 22px;
+  height: 22px;
+  opacity: 0.9;
+}
+
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.footer-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.footer-horario {
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.footer-title {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin: 28px 0 12px;
+}
+
+.footer-col:first-child .footer-title {
+  margin-top: 0;
+}
+
+.footer-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.footer-line i {
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 32px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.footer-copy,
+.footer-powered {
+  margin: 0;
+}
+
+/* O footer já tem padding-top de 52px internamente (ver regra .footer
+   mais acima), então a margem externa só duplicava o espaçamento —
+   principalmente quando algo (como o Sobre Nós) já vem logo antes dele */
+.footer {
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  /* No mobile, o Sobre Nós + Footer já garantem altura suficiente,
+     então o min-height forçado do container só cria espaço vazio */
+  .container {
+    min-height: auto;
+  }
+}
+
+/* ─── Footer em colunas no desktop ───────────────────────────── */
+@media (min-width: 900px) {
+  .footer-content {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 8px 80px;
+  }
+
+  /* logo + tagline continuam centralizadas, ocupando a linha toda */
+  .footer-brand {
+    flex: 1 1 100%;
+    margin-bottom: 28px;
+  }
+
+  /* Contato e Endereço lado a lado, alinhados à esquerda */
+  .footer-col {
+    flex: 0 1 260px;
+    text-align: left;
+  }
+
+  .footer-col .footer-title {
+    margin-top: 0;
+  }
+
+  .footer-col .footer-line {
+    justify-content: flex-start;
+  }
+}
