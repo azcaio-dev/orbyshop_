@@ -56,7 +56,7 @@ function AdminProducts() {
     setSizes((prev) => {
       const already = prev.includes(size)
       if (already) { setSizeStocks((s) => { const u = { ...s }; delete u[size]; return u }); return prev.filter((i) => i !== size) }
-      setSizeStocks((s) => ({ ...s, [size]: s[size] || '' }))
+      setSizeStocks((s) => ({ ...s, [size]: 1 }))
       return [...prev, size]
     })
   }
@@ -67,7 +67,7 @@ function AdminProducts() {
     setVariationSizes((prev) => {
       const already = prev.includes(size)
       if (already) { setVariationSizeStocks((s) => { const u = { ...s }; delete u[size]; return u }); return prev.filter((i) => i !== size) }
-      setVariationSizeStocks((s) => ({ ...s, [size]: s[size] || '' }))
+      setVariationSizeStocks((s) => ({ ...s, [size]: 1 }))
       return [...prev, size]
     })
   }
