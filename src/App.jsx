@@ -17,8 +17,13 @@ import OrbyCreateStore from './pages/OrbyCreateStore'
 import OrbyEditStore from './pages/OrbyEditStore'
 import Landing from './pages/Landing'
 import ScrollToTop from './components/ScrollToTop'
+import { getStoreSlugFromDomain } from './config/customDomains'
 
 function App() {
+  // Se o domínio atual estiver mapeado (ex: calcarbem.app.br), a raiz "/"
+  // deve abrir direto a loja correspondente, em vez da Landing da Orby.
+  const customDomainSlug = getStoreSlugFromDomain()
+
   return (
     <BrowserRouter>
       <ScrollToTop />
@@ -28,7 +33,7 @@ function App() {
         <Route path="/orby-admin/criar-loja" element={<OrbyCreateStore />} />
         <Route path="/orby-admin/editar-loja/:storeSlug" element={<OrbyEditStore />} />
 
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={customDomainSlug ? <Home /> : <Landing />} />
         <Route path="/:storeSlug" element={<Home />} />
 
         <Route path="/produtos" element={<Products />} />
@@ -52,7 +57,7 @@ function App() {
 
       {!window.location.pathname.startsWith('/admin') &&
        !window.location.pathname.startsWith('/orby-admin') &&
-       window.location.pathname !== '/' && <Footer />}
+       (window.location.pathname !== '/' || customDomainSlug) && <Footer />}
     </BrowserRouter>
   )
 }

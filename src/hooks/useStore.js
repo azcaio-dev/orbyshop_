@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { doc, getDoc } from 'firebase/firestore'
 import { useLocation, useParams } from 'react-router-dom'
 import { db } from '../services/firebase'
+import { getStoreSlugFromDomain } from '../config/customDomains'
 
 function useStore() {
   const params = useParams()
   const location = useLocation()
+
+  const slugFromDomain = getStoreSlugFromDomain()
 
   const slugFromParams = params.storeSlug
 
@@ -17,7 +20,8 @@ function useStore() {
       ? location.pathname.split('/')[1]
       : null
 
-  const storeSlug = slugFromParams || slugFromPath || null
+  // Prioridade: domínio customizado > param da rota > primeiro segmento do path
+  const storeSlug = slugFromDomain || slugFromParams || slugFromPath || null
 
   const [store, setStore] = useState(null)
   const [loading, setLoading] = useState(true)
