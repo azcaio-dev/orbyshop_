@@ -49,8 +49,9 @@ function AdminProducts() {
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
   const letterSizes = ['PP','P','M','G','GG','G1','G2','G3']
   const numberSizes = ['28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56']
-  const sizeOptions = sizeType === 'letter' ? letterSizes : sizeType === 'number' ? numberSizes : ['Tamanho único']
-  const variationSizeOptions = variationSizeType === 'letter' ? letterSizes : variationSizeType === 'number' ? numberSizes : ['Tamanho único']
+  const ageSizes = ['3 meses','6 meses','9 meses','1 ano','2 anos','3 anos','4 anos','5 anos','6 anos','7 anos','8 anos','9 anos','10 anos','11 anos','12 anos','13 anos','14 anos']
+  const sizeOptions = sizeType === 'letter' ? letterSizes : sizeType === 'number' ? numberSizes : sizeType === 'age' ? ageSizes : ['Tamanho único']
+  const variationSizeOptions = variationSizeType === 'letter' ? letterSizes : variationSizeType === 'number' ? numberSizes : variationSizeType === 'age' ? ageSizes : ['Tamanho único']
 
   function toggleSize(size) {
     setSizes((prev) => {
@@ -236,6 +237,7 @@ function AdminProducts() {
             <select value={sizeType} onChange={(e) => { setSizeType(e.target.value); setSizes(e.target.value === 'unique' ? ['Tamanho único'] : []) }}>
               <option value="letter">Tamanho por letra</option>
               <option value="number">Tamanho por número</option>
+              <option value="age">Tamanho por idade</option>
               <option value="unique">Tamanho único</option>
             </select>
 
@@ -284,6 +286,7 @@ function AdminProducts() {
                   <select value={variationSizeType} onChange={(e) => { setVariationSizeType(e.target.value); setVariationSizes(e.target.value === 'unique' ? ['Tamanho único'] : []) }}>
                     <option value="letter">Tamanho por letra</option>
                     <option value="number">Tamanho por número</option>
+                    <option value="age">Tamanho por idade</option>
                     <option value="unique">Tamanho único</option>
                   </select>
                   <div className="sizes-box">
