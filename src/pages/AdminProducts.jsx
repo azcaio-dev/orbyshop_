@@ -8,6 +8,7 @@ import Toast from '../components/Toast'
 import AdminLayout from '../layouts/AdminLayout'
 import useStore from '../hooks/useStore'
 import { hasFeature } from '../utils/features'
+import lupaIcon from '../assets/lupa.png'
 
 function AdminProducts() {
   const [products, setProducts] = useState([])
@@ -38,6 +39,7 @@ function AdminProducts() {
   const [variationSizes, setVariationSizes] = useState([])
   const [variations, setVariations] = useState([])
   const [toast, setToast] = useState({ message: '', type: 'success' })
+  const [productSearch, setProductSearch] = useState('')
   const navigate = useNavigate()
   const formRef = useRef(null)
 
@@ -68,6 +70,11 @@ function AdminProducts() {
 
   const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))]
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
+  const filteredAdminProducts = products.filter((product) => {
+    const term = productSearch.trim().toLowerCase()
+    if (!term) return true
+    return [product.name, product.brand, product.category].some((field) => (field || '').toLowerCase().includes(term))
+  })
   const letterSizes = ['PP','P','M','G','GG','G1','G2','G3']
   const numberSizes = ['28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56']
   const ageSizes = ['3 meses','6 meses','9 meses','1 ano','2 anos','3 anos','4 anos','5 anos','6 anos','7 anos','8 anos','9 anos','10 anos','11 anos','12 anos','13 anos','14 anos']
@@ -376,9 +383,24 @@ function AdminProducts() {
           <section className="orby-admin-list">
             <div className="orby-list-header">
               <h2>Produtos cadastrados</h2>
-              <span>{products.length} produto(s)</span>
+              <span>{filteredAdminProducts.length} produto(s)</span>
             </div>
-            {products.map((product) => {
+
+            <div className="admin-search-box">
+              <img src={lupaIcon} alt="Buscar" className="admin-search-icon" />
+              <input
+                type="text"
+                placeholder="Buscar por nome, marca ou categoria"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+              />
+            </div>
+
+            {filteredAdminProducts.length === 0 && (
+              <p className="admin-search-empty">Nenhum produto encontrado.</p>
+            )}
+
+            {filteredAdminProducts.map((product) => {
               const productImage = product.images?.[0] || product.image || ''
               return (
                 <div key={product.id} className="orby-admin-item">
