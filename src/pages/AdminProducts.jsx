@@ -18,6 +18,7 @@ function AdminProducts() {
   const [name, setName] = useState('')
   const [oldPrice, setOldPrice] = useState('')
   const [price, setPrice] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('vista')
   const [description, setDescription] = useState('')
   const [mainColor, setMainColor] = useState('')
   const [productImages, setProductImages] = useState([null])
@@ -52,6 +53,10 @@ function AdminProducts() {
   const ageSizes = ['3 meses','6 meses','9 meses','1 ano','2 anos','3 anos','4 anos','5 anos','6 anos','7 anos','8 anos','9 anos','10 anos','11 anos','12 anos','13 anos','14 anos']
   const sizeOptions = sizeType === 'letter' ? letterSizes : sizeType === 'number' ? numberSizes : sizeType === 'age' ? ageSizes : ['Tamanho único']
   const variationSizeOptions = variationSizeType === 'letter' ? letterSizes : variationSizeType === 'number' ? numberSizes : variationSizeType === 'age' ? ageSizes : ['Tamanho único']
+  const paymentMethodOptions = [
+    { value: 'vista', label: 'À vista' },
+    ...Array.from({ length: 10 }, (_, i) => ({ value: `${i + 1}x`, label: `${i + 1}x sem juros` })),
+  ]
 
   function toggleSize(size) {
     setSizes((prev) => {
@@ -135,7 +140,7 @@ function AdminProducts() {
   function removeVariation(indexToRemove) { setVariations((prev) => prev.filter((_, i) => i !== indexToRemove)) }
 
   function clearForm() {
-    setName(''); setOldPrice(''); setPrice(''); setDescription(''); setMainColor('')
+    setName(''); setOldPrice(''); setPrice(''); setPaymentMethod('vista'); setDescription(''); setMainColor('')
     setProductImages([null]); setEditingId(null); setBrand(''); setCategory('')
     setProductSection(''); setSizeType('letter'); setSizes([]); setCostPrice(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
     setVariationFile(null); setVariationSizeType('letter'); setVariationSizes([])
@@ -144,7 +149,7 @@ function AdminProducts() {
 
   function handleEdit(product) {
     setEditingId(product.id); setName(product.name || ''); setOldPrice(product.oldPrice ?? '')
-    setPrice(product.price || ''); setDescription(product.description || ''); setMainColor(product.mainColor || '')
+    setPrice(product.price || ''); setPaymentMethod(product.paymentMethod || 'vista'); setDescription(product.description || ''); setMainColor(product.mainColor || '')
     setBrand(product.brand || ''); setCategory(product.category || ''); setProductSection(product.productSection || '')
     setSizeType(product.sizeType || 'letter'); setSizes(product.sizes || []); setCostPrice(product.costPrice || '')
     setSizeStocks(product.sizeStocks || {}); setVariations(product.variations || [])
@@ -167,7 +172,7 @@ function AdminProducts() {
     setLoading(true)
     try {
       if (editingId) {
-        const updatedData = { name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price),
+        const updatedData = { name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod,
           description, mainColor, brand, category, productSection, sizeType, sizes, variations,
           costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0 }
         const validImages = productImages.filter(Boolean)
@@ -179,7 +184,7 @@ function AdminProducts() {
         if (validImages.length === 0) { showToast('Selecione pelo menos uma foto do produto', 'warning'); setLoading(false); return }
         const uploadedImages = await Promise.all(validImages.map((f) => uploadImage(f)))
         await addDoc(collection(db, 'stores', storeSlug, 'products'), {
-          name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), description, mainColor,
+          name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod, description, mainColor,
           brand, category, productSection, sizeType, sizes, images: uploadedImages, variations,
           costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0,
         })
@@ -215,6 +220,12 @@ function AdminProducts() {
             <input type="text" placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
             <input type="number" placeholder="Preço antigo (opcional)" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} />
             <input type="number" placeholder="Preço atual" value={price} onChange={(e) => setPrice(e.target.value)} required />
+
+            <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              {paymentMethodOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
 
             {isPro && (
                 <input type="number" placeholder="Preço de custo" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
@@ -349,6 +360,7 @@ function AdminProducts() {
                   <div>
                     <strong>{product.name}</strong>
                     <p>{Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    <p>{product.paymentMethod && product.paymentMethod !== 'vista' ? `${product.paymentMethod} sem juros` : 'À vista'}</p>
                     {product.brand && <p>{brandLabel}: {product.brand}</p>}
                     {product.category && <p>Categorias: {product.category}</p>}
                     <p>{product.available ? 'Disponível' : 'Indisponível'}</p>

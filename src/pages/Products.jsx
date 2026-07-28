@@ -48,6 +48,12 @@ function getSizesWithStock(product) {
   return sizes.filter((size) => Number(product.sizeStocks[size] || 0) > 0)
 }
 
+// ✅ Formata a forma de pagamento pra exibição
+function formatPaymentMethod(paymentMethod) {
+  if (!paymentMethod || paymentMethod === 'vista') return 'À vista'
+  return `${paymentMethod} sem juros`
+}
+
 function Products() {
   const { cart, addToCart } = useCart()
   const navigate = useNavigate()
@@ -267,18 +273,21 @@ function Products() {
 
                       <div className="product-info">
                         <h3>{product.name}</h3>
-                        {product.productSection === 'outlet' && product.oldPrice ? (
-                          <div className="price-box">
-                            <span className="old-price">
-                              {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </span>
-                            <strong className="current-price">
-                              {Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </strong>
-                          </div>
-                        ) : (
-                          <p>{Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                        )}
+                        <div className="price-row">
+                          {product.productSection === 'outlet' && product.oldPrice ? (
+                            <div className="price-box">
+                              <span className="old-price">
+                                {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </span>
+                              <strong className="current-price">
+                                {Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </strong>
+                            </div>
+                          ) : (
+                            <p>{Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                          )}
+                          <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
+                        </div>
                       </div>
 
                       {activeFilter !== 'search' && (

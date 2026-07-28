@@ -13,6 +13,12 @@ import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 import SobreNos from '../components/SobreNos'
 
+// ✅ Formata a forma de pagamento pra exibição
+function formatPaymentMethod(paymentMethod) {
+  if (!paymentMethod || paymentMethod === 'vista') return 'À vista'
+  return `${paymentMethod} sem juros`
+}
+
 function Home() {
   const { cart, addToCart } = useCart()
   const navigate = useNavigate()
@@ -336,12 +342,15 @@ const storePrefix = `/${storeSlug}`
 
                     <div>
                       <h3>{product.name}</h3>
-                      <p>
-                        {Number(product.price).toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </p>
+                      <div className="price-row">
+                        <p>
+                          {Number(product.price).toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })}
+                        </p>
+                        <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -383,12 +392,15 @@ const storePrefix = `/${storeSlug}`
 
                     <div>
                       <h3>{product.name}</h3>
-                      <p>
-                        {Number(product.price).toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </p>
+                      <div className="price-row">
+                        <p>
+                          {Number(product.price).toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })}
+                        </p>
+                        <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -438,22 +450,25 @@ const storePrefix = `/${storeSlug}`
                     <div>
                       <h3>{product.name}</h3>
 
-                      <div className="price-box">
-                        {product.oldPrice && (
-                          <span className="old-price">
-                            {Number(product.oldPrice).toLocaleString('pt-BR', {
+                      <div className="price-row">
+                        <div className="price-box">
+                          {product.oldPrice && (
+                            <span className="old-price">
+                              {Number(product.oldPrice).toLocaleString('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL',
+                              })}
+                            </span>
+                          )}
+
+                          <strong className="current-price">
+                            {Number(product.price).toLocaleString('pt-BR', {
                               style: 'currency',
                               currency: 'BRL',
                             })}
-                          </span>
-                        )}
-
-                        <strong className="current-price">
-                          {Number(product.price).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          })}
-                        </strong>
+                          </strong>
+                        </div>
+                        <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
                       </div>
                     </div>
                   </article>
@@ -515,30 +530,33 @@ const storePrefix = `/${storeSlug}`
                     <div className="product-info">
                       <h3>{product.name}</h3>
 
-                      {product.productSection === 'outlet' && product.oldPrice ? (
-                        <div className="price-box">
-                          <span className="old-price">
-                            {Number(product.oldPrice).toLocaleString('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                            })}
-                          </span>
+                      <div className="price-row">
+                        {product.productSection === 'outlet' && product.oldPrice ? (
+                          <div className="price-box">
+                            <span className="old-price">
+                              {Number(product.oldPrice).toLocaleString('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL',
+                              })}
+                            </span>
 
-                          <strong className="current-price">
+                            <strong className="current-price">
+                              {Number(product.price).toLocaleString('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL',
+                              })}
+                            </strong>
+                          </div>
+                        ) : (
+                          <p>
                             {Number(product.price).toLocaleString('pt-BR', {
                               style: 'currency',
                               currency: 'BRL',
                             })}
-                          </strong>
-                        </div>
-                      ) : (
-                        <p>
-                          {Number(product.price).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          })}
-                        </p>
-                      )}
+                          </p>
+                        )}
+                        <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
+                      </div>
                     </div>
 
                     {activeFilter !== 'search' && (

@@ -5780,3 +5780,45 @@ button:hover {
 .page-content {
   padding-top: var(--header-height);
 }
+
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.payment-method {
+  font-size: 11px;
+  font-weight: 400;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.product-details .price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.product-details .payment-method {
+  font-size: 14px;
+  color: #2b2b2b;
+}
+
+.product-details .price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: nowrap;
+  margin-bottom: 16px;
+}
+
+.product-details .price-row .product-price-box {
+  margin: 0;
+}
+
+.product-details .payment-method {
+  font-size: 14px;
+}

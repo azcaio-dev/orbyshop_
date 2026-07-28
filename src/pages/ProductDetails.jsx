@@ -22,6 +22,12 @@ function sizeHasStock(product, variation, size) {
   return Number(sizeStocks[size] || 0) > 0
 }
 
+// ✅ Formata a forma de pagamento pra exibição
+function formatPaymentMethod(paymentMethod) {
+  if (!paymentMethod || paymentMethod === 'vista') return 'À vista'
+  return `${paymentMethod} sem juros`
+}
+
 function ProductDetails() {
   const navigate = useNavigate()
   const { cart, addToCart, vendedorSlug } = useCart()
@@ -163,13 +169,16 @@ Tamanho: ${selectedSize || '-'}`
 
         <section className="product-content">
           <h1>{product.name}</h1>
-          <div className="product-price-box">
-            {product.productSection === 'outlet' && product.oldPrice && (
-              <span className="product-old-price">
-                {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </span>
-            )}
-            <strong className="product-current-price">{formattedPrice}</strong>
+          <div className="price-row">
+            <div className="product-price-box">
+              {product.productSection === 'outlet' && product.oldPrice && (
+                <span className="product-old-price">
+                  {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </span>
+              )}
+              <strong className="product-current-price">{formattedPrice}</strong>
+            </div>
+            <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
           </div>
 
           <div className="product-description">
