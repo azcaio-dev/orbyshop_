@@ -5858,3 +5858,178 @@ button:hover {
   color: #888;
   padding: 12px 0;
 }
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-stock-hint {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #6b7280;
+  background: #f6f7fb;
+  border-radius: 8px;
+  border: 0.5px solid #e5e7eb;
+}
+
+.vendor-stats-table {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.vendor-stats-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1fr 1fr;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 0.5px solid #f3f4f6;
+}
+
+.vendor-stats-row:last-child {
+  border-bottom: none;
+}
+
+.vendor-stats-row--header {
+  background: #f6f7fb;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.vendor-stats-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.vendor-stats-profit {
+  color: #0f6e56;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .vendor-stats-row {
+    grid-template-columns: 1.4fr 0.7fr 1fr;
+    font-size: 12px;
+  }
+  .vendor-stats-row span:nth-child(4) {
+    display: none;
+  }
+}
+
+.fin-metric-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 600px) {
+  .fin-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fin-metric-grid .dash-metric-value {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 380px) {
+  .fin-metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vendor-stats-table {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.vendor-stats-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1fr 1fr;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 0.5px solid #f3f4f6;
+}
+
+.vendor-stats-row:last-child {
+  border-bottom: none;
+}
+
+.vendor-stats-row--header {
+  background: #f6f7fb;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.vendor-stats-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.vendor-stats-profit {
+  color: #0f6e56;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .vendor-stats-row--header {
+    display: none;
+  }
+  .vendor-stats-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "name name"
+      "count revenue"
+      "profit profit";
+    padding: 12px 14px;
+    gap: 4px;
+  }
+  .vendor-stats-name {
+    grid-area: name;
+    margin-bottom: 4px;
+  }
+  .vendor-stats-row span:nth-child(2) { grid-area: count; }
+  .vendor-stats-row span:nth-child(3) { grid-area: revenue; text-align: right; }
+  .vendor-stats-profit { grid-area: profit; font-size: 12px; opacity: 0.85; }
+}
+
+.vendor-stats-mobile-label {
+  display: none;
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .vendor-stats-mobile-label {
+    display: inline;
+  }
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.form-row-2 input,
+.form-row-2 select {
+  min-width: 0;
+  font-size: 13px;
+  padding: 8px 10px;
+}

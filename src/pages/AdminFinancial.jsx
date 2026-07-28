@@ -74,6 +74,8 @@ function AdminFinancial() {
 
     const initChart = () => {
       if (!window.Chart || !chartRef.current) return
+      const containerWidth = chartRef.current.parentElement?.clientWidth || window.innerWidth
+      const isNarrow = containerWidth < 420
       chartInstance.current = new window.Chart(chartRef.current, {
         type: 'bar',
         data: {
@@ -85,8 +87,8 @@ function AdminFinancial() {
               backgroundColor: data.map(v => v > 0 && v === maxVal ? '#534AB7' : '#AFA9EC'),
               borderRadius: 6,
               borderSkipped: false,
-              barThickness: 18,
-              maxBarThickness: 18,
+              barThickness: isNarrow ? 6 : 18,
+              maxBarThickness: isNarrow ? 6 : 18,
             },
             {
               label: 'Média',
@@ -117,13 +119,21 @@ function AdminFinancial() {
           scales: {
             x: {
               grid: { display: false },
-              ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 15 }
+              ticks: {
+                font: { size: isNarrow ? 9 : 11 },
+                maxRotation: isNarrow ? 90 : 45,
+                minRotation: isNarrow ? 90 : 0,
+                autoSkip: true,
+                autoSkipPadding: isNarrow ? 12 : 4,
+                maxTicksLimit: isNarrow ? 5 : 15,
+              }
             },
             y: {
               grid: { color: 'rgba(0,0,0,0.05)' },
               beginAtZero: true,
               ticks: {
-                font: { size: 11 },
+                font: { size: isNarrow ? 9 : 11 },
+                maxTicksLimit: isNarrow ? 5 : 8,
                 callback: (v) => 'R$ ' + Number(v).toLocaleString('pt-BR')
               }
             }
@@ -204,6 +214,18 @@ function AdminFinancial() {
   })
   const bestProduct = Object.entries(productMap).sort((a, b) => b[1].qty - a[1].qty)[0]
 
+  // ── Vendas por vendedor ───────────────────────────────────────
+  const vendorMap = {}
+  sales.forEach((sale) => {
+    const key = sale.vendedorId || 'none'
+    const label = sale.vendedorName || 'Sem vendedor'
+    if (!vendorMap[key]) vendorMap[key] = { name: label, count: 0, revenue: 0, profit: 0 }
+    vendorMap[key].count += 1
+    vendorMap[key].revenue += Number(sale.total || 0)
+    vendorMap[key].profit += Number(sale.profit || 0)
+  })
+  const vendorStats = Object.values(vendorMap).sort((a, b) => b.revenue - a.revenue)
+
   // Dados resumo do gráfico (últimos 30 dias)
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -259,7 +281,7 @@ function AdminFinancial() {
         </div>
 
         <p className="dash-section-title">Visão geral</p>
-        <div className="dash-metric-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0,1fr))', marginBottom: 28 }}>
+        <div className="dash-metric-grid fin-metric-grid" style={{ marginBottom: 28 }}>
           {mainMetrics.map((m) => (
             <div key={m.label} className={`dash-metric-card${m.accent ? ' dash-metric-accent' : ''}`}>
               <div className="dash-metric-label">{m.label}</div>
@@ -284,6 +306,33 @@ function AdminFinancial() {
             </div>
           ))}
         </div>
+
+        {/* ── Vendas por vendedor ── */}
+        {vendorStats.length > 0 && (
+          <div className="dash-sales-section" style={{ marginTop: 24 }}>
+            <div className="dash-sales-header">
+              <p className="dash-section-title" style={{ marginBottom: 0 }}>Vendas por vendedor</p>
+              <span className="dash-sales-count">{vendorStats.length} vendedor(es)</span>
+            </div>
+
+            <div className="vendor-stats-table">
+              <div className="vendor-stats-row vendor-stats-row--header">
+                <span>Vendedor</span>
+                <span>Vendas</span>
+                <span>Faturamento</span>
+                <span>Lucro</span>
+              </div>
+              {vendorStats.map((vendor) => (
+                <div key={vendor.name} className="vendor-stats-row">
+                  <span className="vendor-stats-name">{vendor.name}</span>
+                  <span><span className="vendor-stats-mobile-label">Vendas: </span>{vendor.count}</span>
+                  <span><span className="vendor-stats-mobile-label">Faturamento: </span>{fmt(vendor.revenue)}</span>
+                  <span className="vendor-stats-profit"><span className="vendor-stats-mobile-label">Lucro: </span>{fmt(vendor.profit)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Gráfico de evolução diária ── */}
         <div className="dash-sales-section" style={{ marginTop: 24 }}>

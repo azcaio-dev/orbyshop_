@@ -12,6 +12,7 @@ function AdminSales() {
   const { store, loading: storeLoading, storeSlug } = useStore()
   const [products, setProducts] = useState([])
   const [sales, setSales] = useState([])
+  const [vendedores, setVendedores] = useState([])
   const [salesFilter, setSalesFilter] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -22,12 +23,14 @@ function AdminSales() {
 
   // ── Formulário de item ──────────────────────────────────────
   const [customerName, setCustomerName] = useState('')
+  const [selectedVendedorId, setSelectedVendedorId] = useState('')
   const [selectedProductId, setSelectedProductId] = useState('')
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [selectedVariationIndex, setSelectedVariationIndex] = useState('')
   const [selectedSize, setSelectedSize] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [unitPrice, setUnitPrice] = useState('')
+  const [paymentType, setPaymentType] = useState('pix')
 
   // ── Carrinho de venda (múltiplos itens) ─────────────────────
   const [saleItems, setSaleItems] = useState([])
@@ -39,7 +42,7 @@ function AdminSales() {
   function showDialog(message, onConfirm) { setDialog({ message, onConfirm }) }
   function closeDialog() { setDialog({ message: '', onConfirm: null }) }
 
-  useEffect(() => { if (storeSlug && isPro) { loadProducts(); loadSales() } }, [storeSlug, isPro])
+  useEffect(() => { if (storeSlug && isPro) { loadProducts(); loadSales(); loadVendedores() } }, [storeSlug, isPro])
 
   async function loadSales() {
     try {
@@ -55,6 +58,15 @@ function AdminSales() {
     const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
     data.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
     setProducts(data)
+  }
+
+  async function loadVendedores() {
+    try {
+      const snapshot = await getDocs(collection(db, 'stores', storeSlug, 'vendedores'))
+      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      data.sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }))
+      setVendedores(data)
+    } catch (error) { console.error(error) }
   }
 
   function handleSelectProduct(productId) {
@@ -106,6 +118,7 @@ function AdminSales() {
       quantity: Number(quantity),
       unitPrice: Number(unitPrice),
       unitCost: Number(selectedProduct.costPrice || 0),
+      paymentType,
       total: Number(unitPrice) * Number(quantity),
       profit: (Number(unitPrice) - Number(selectedProduct.costPrice || 0)) * Number(quantity),
     }
@@ -119,6 +132,7 @@ function AdminSales() {
     setSelectedSize('')
     setQuantity(1)
     setUnitPrice('')
+    setPaymentType('pix')
 
     showToast('Item adicionado!', 'success')
   }
@@ -136,8 +150,12 @@ function AdminSales() {
       closeDialog()
       setLoadingSale(true)
       try {
+        const selectedVendedor = vendedores.find((v) => v.id === selectedVendedorId)
+
         await addDoc(collection(db, 'stores', storeSlug, 'sales'), {
           customerName,
+          vendedorId: selectedVendedorId || null,
+          vendedorName: selectedVendedor?.nome || null,
           status: 'active',
           total: saleTotal,
           profit: saleProfit,
@@ -151,6 +169,7 @@ function AdminSales() {
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             unitCost: item.unitCost,
+            paymentType: item.paymentType,
             total: item.total,
             profit: item.profit,
           })),
@@ -187,6 +206,7 @@ function AdminSales() {
         showToast('Venda cadastrada com sucesso!', 'success')
         setSaleItems([])
         setCustomerName('')
+        setSelectedVendedorId('')
         await loadSales()
         await loadProducts()
       } catch (error) { console.error(error); showToast('Erro ao cadastrar venda', 'error') }
@@ -281,6 +301,12 @@ function AdminSales() {
 
   function fmt(v) { return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }
 
+  function formatPaymentType(type) {
+    if (type === 'dinheiro') return 'Dinheiro'
+    if (type === 'cartao') return 'Cartão'
+    return 'Pix'
+  }
+
   if (storeLoading || !store) return <AdminLayout><div className="dash-loading">Carregando...</div></AdminLayout>
   if (!isPro) return <AdminLayout><UpgradePlan /></AdminLayout>
 
@@ -297,6 +323,14 @@ function AdminSales() {
   const saleTotal = saleItems.reduce((acc, item) => acc + item.total, 0)
   const saleProfit = saleItems.reduce((acc, item) => acc + item.profit, 0)
 
+  const selectedVariationSizes = selectedProduct
+    ? (selectedVariationIndex === 'main'
+        ? selectedProduct.sizes
+        : selectedVariationIndex !== ''
+          ? selectedProduct.variations?.[Number(selectedVariationIndex)]?.sizes
+          : [])
+    : []
+
   return (
     <AdminLayout>
       <div className="dash-content">
@@ -308,9 +342,22 @@ function AdminSales() {
         <div className="orby-admin-layout">
           <form onSubmit={handleSubmit} className="orby-admin-form">
 
-            <label>Cliente</label>
-            <input type="text" placeholder="Nome do cliente" value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)} />
+            <div className="form-row-2">
+              <div>
+                <label>Cliente</label>
+                <input type="text" placeholder="Nome do cliente" value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)} />
+              </div>
+              <div>
+                <label>Vendedor</label>
+                <select value={selectedVendedorId} onChange={(e) => setSelectedVendedorId(e.target.value)}>
+                  <option value="">Sem vendedor / venda direta</option>
+                  {vendedores.map((vendedor) => (
+                    <option key={vendedor.id} value={vendedor.id}>{vendedor.nome}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             {/* ── Seleção de item ── */}
             <div style={{ borderTop: '0.5px solid #e5e7eb', paddingTop: 12, marginTop: 4 }}>
@@ -326,43 +373,51 @@ function AdminSales() {
                 ))}
               </select>
 
-              {selectedProduct && (
-                <>
-                  <label style={{ marginTop: 10 }}>Cor / Variação</label>
-                  <select value={selectedVariationIndex}
+              <div className="form-row-3" style={{ marginTop: 10 }}>
+                <div>
+                  <label>Cor / Variação</label>
+                  <select disabled={!selectedProduct} value={selectedVariationIndex}
                     onChange={(e) => { setSelectedVariationIndex(e.target.value); setSelectedSize('') }}>
-                    <option value="">Selecione uma opção</option>
-                    <option value="main">{selectedProduct.mainColor || 'Principal'}</option>
-                    {selectedProduct.variations?.map((variation, index) => (
+                    <option value="">{selectedProduct ? 'Selecione uma opção' : '—'}</option>
+                    {selectedProduct && <option value="main">{selectedProduct.mainColor || 'Principal'}</option>}
+                    {selectedProduct?.variations?.map((variation, index) => (
                       <option key={index} value={index}>{variation.colorName}</option>
                     ))}
                   </select>
-                </>
-              )}
+                </div>
 
-              {selectedProduct && selectedVariationIndex !== '' && (
-                <>
-                  <label style={{ marginTop: 10 }}>Tamanho</label>
-                  <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
-                    <option value="">Selecione um tamanho</option>
-                    {(selectedVariationIndex === 'main'
-                      ? selectedProduct.sizes
-                      : selectedProduct.variations?.[Number(selectedVariationIndex)]?.sizes
-                    )?.map((size) => <option key={size} value={size}>{size}</option>)}
+                <div>
+                  <label>Tamanho</label>
+                  <select disabled={!selectedProduct || selectedVariationIndex === ''} value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}>
+                    <option value="">{selectedVariationIndex !== '' ? 'Selecione um tamanho' : '—'}</option>
+                    {selectedVariationSizes?.map((size) => <option key={size} value={size}>{size}</option>)}
                   </select>
-                </>
-              )}
+                </div>
 
-              <label style={{ marginTop: 10 }}>Quantidade</label>
-              <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                <div>
+                  <label>Quantidade</label>
+                  <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+                </div>
+              </div>
 
-              <label style={{ marginTop: 10 }}>Preço da venda</label>
-              <input type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
+              <div className="form-row-2" style={{ marginTop: 10 }}>
+                <div>
+                  <label>Preço da venda</label>
+                  <input type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
+                </div>
+                <div>
+                  <label>Forma de pagamento</label>
+                  <select value={paymentType} onChange={(e) => setPaymentType(e.target.value)}>
+                    <option value="pix">Pix</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao">Cartão</option>
+                  </select>
+                </div>
+              </div>
 
               {selectedProduct && selectedSize && (
-                <p style={{ fontSize: 12, color: '#6b7280', margin: '6px 0 0' }}>
-                  Estoque disponível: {getAvailableStock()}
-                </p>
+                <p className="sales-stock-hint">Estoque disponível: {getAvailableStock()}</p>
               )}
 
               <button type="button" onClick={handleAddItem}
@@ -387,7 +442,7 @@ function AdminSales() {
                     <div style={{ flex: 1 }}>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#111827' }}>{item.productName}</p>
                       <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
-                        {item.variationName} / {item.size} · Qtd: {item.quantity} · {fmt(item.unitPrice)}
+                        {item.variationName} / {item.size} · Qtd: {item.quantity} · {fmt(item.unitPrice)} · {formatPaymentType(item.paymentType)}
                       </p>
                       <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 600, color: '#534ab7' }}>
                         {fmt(item.total)}
@@ -449,6 +504,7 @@ function AdminSales() {
 
                     <p style={{ fontSize: 12, color: '#6b7280' }}>
                       {formatDate(sale.createdAt)}
+                      {sale.vendedorName && ` · Vendedor: ${sale.vendedorName}`}
                     </p>
 
                     {items.map((item, index) => (
@@ -467,6 +523,7 @@ function AdminSales() {
 
                         <p style={{ margin: '2px 0', fontSize: 13 }}>
                           Qtd: {item.quantity} — {item.variationName} / {item.size}
+                          {item.paymentType && ` · ${formatPaymentType(item.paymentType)}`}
                         </p>
 
                         <p style={{ margin: '2px 0', fontSize: 13 }}>
