@@ -5822,3 +5822,10 @@ button:hover {
 .product-details .payment-method {
   font-size: 14px;
 }
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+

@@ -46,6 +46,26 @@ function AdminProducts() {
     setTimeout(() => setToast({ message: '', type: 'success' }), 2500)
   }
 
+  const lastSizeTypeKey = `orby-last-size-type-${storeSlug}`
+
+  function getLastSizeType() {
+    return localStorage.getItem(lastSizeTypeKey) || 'letter'
+  }
+
+  function handleSizeTypeChange(value) {
+    setSizeType(value)
+    setSizes(value === 'unique' ? ['Tamanho único'] : [])
+    localStorage.setItem(lastSizeTypeKey, value)
+  }
+
+  // ✅ Ao trocar de loja/carregar a página, usa o último tipo de tamanho usado nessa loja
+  useEffect(() => {
+    if (!storeSlug) return
+    const restoredSizeType = getLastSizeType()
+    setSizeType(restoredSizeType)
+    setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : [])
+  }, [storeSlug])
+
   const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))]
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
   const letterSizes = ['PP','P','M','G','GG','G1','G2','G3']
@@ -140,9 +160,10 @@ function AdminProducts() {
   function removeVariation(indexToRemove) { setVariations((prev) => prev.filter((_, i) => i !== indexToRemove)) }
 
   function clearForm() {
+    const restoredSizeType = getLastSizeType()
     setName(''); setOldPrice(''); setPrice(''); setPaymentMethod('vista'); setDescription(''); setMainColor('')
     setProductImages([null]); setEditingId(null); setBrand(''); setCategory('')
-    setProductSection(''); setSizeType('letter'); setSizes([]); setCostPrice(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
+    setProductSection(''); setSizeType(restoredSizeType); setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : []); setCostPrice(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
     setVariationFile(null); setVariationSizeType('letter'); setVariationSizes([])
     setVariationSizeStocks({}); setVariations([])
   }
@@ -218,34 +239,38 @@ function AdminProducts() {
         <div className="orby-admin-layout">
           <form ref={formRef} onSubmit={handleSubmit} className="orby-admin-form">
             <input type="text" placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} required />
-            <input type="number" placeholder="Preço antigo (opcional)" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} />
-            <input type="number" placeholder="Preço atual" value={price} onChange={(e) => setPrice(e.target.value)} required />
 
-            <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-              {paymentMethodOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+            <div className="form-row-3">
+              <input type="number" placeholder="Preço antigo (opcional)" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} />
+              <input type="number" placeholder="Preço atual" value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                {paymentMethodOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
 
-            {isPro && (
+            <div className="form-row-3">
+              {isPro && (
                 <input type="number" placeholder="Preço de custo" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} />
-            )}
+              )}
 
-            {store.menu?.showBrands !== false && (
-              <>
-                <input type="text" placeholder={brandLabel} list="brand-options" value={brand} onChange={(e) => setBrand(e.target.value)} />
-                <datalist id="brand-options">{brands.map((item) => <option key={item} value={item} />)}</datalist>
-              </>
-            )}
+              {store.menu?.showBrands !== false && (
+                <>
+                  <input type="text" placeholder={brandLabel} list="brand-options" value={brand} onChange={(e) => setBrand(e.target.value)} />
+                  <datalist id="brand-options">{brands.map((item) => <option key={item} value={item} />)}</datalist>
+                </>
+              )}
 
-            {store.menu?.showCategories !== false && (
-              <>
-                <input type="text" placeholder={categoryLabel} list="category-options" value={category} onChange={(e) => setCategory(e.target.value)} />
-                <datalist id="category-options">{categories.map((item) => <option key={item} value={item} />)}</datalist>
-              </>
-            )}
+              {store.menu?.showCategories !== false && (
+                <>
+                  <input type="text" placeholder={categoryLabel} list="category-options" value={category} onChange={(e) => setCategory(e.target.value)} />
+                  <datalist id="category-options">{categories.map((item) => <option key={item} value={item} />)}</datalist>
+                </>
+              )}
+            </div>
 
-            <select value={sizeType} onChange={(e) => { setSizeType(e.target.value); setSizes(e.target.value === 'unique' ? ['Tamanho único'] : []) }}>
+            <select value={sizeType} onChange={(e) => handleSizeTypeChange(e.target.value)}>
               <option value="letter">Tamanho por letra</option>
               <option value="number">Tamanho por número</option>
               <option value="age">Tamanho por idade</option>
@@ -257,6 +282,7 @@ function AdminProducts() {
                 <button type="button" key={size} className={`size-button ${sizes.includes(size) ? 'active' : ''}`} onClick={() => toggleSize(size)}>{size}</button>
               ))}
             </div>
+
 
             {isPro && sizes.length > 0 && (
               <div className="size-stock-box">
@@ -336,7 +362,7 @@ function AdminProducts() {
               <p>Seção do produto</p>
               <div className="product-section-options">
                 {[{ label: 'Lançamento', value: 'launch' }, { label: 'Outlet', value: 'outlet' }, { label: 'Mais vendidos', value: 'bestseller' }].map((item) => (
-                  <button type="button" key={item.value} className={`section-button ${productSection === item.value ? 'active' : ''}`} onClick={() => setProductSection(item.value)}>{item.label}</button>
+                  <button type="button" key={item.value} className={`section-button ${productSection === item.value ? 'active' : ''}`} onClick={() => setProductSection((prev) => (prev === item.value ? '' : item.value))}>{item.label}</button>
                 ))}
               </div>
             </div>
