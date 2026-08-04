@@ -27,14 +27,12 @@ export default async function handler(req, res) {
 
   // --- LOG TEMPORÁRIO DE DEBUG (remover depois de resolver) ---
   // Aparece só no painel Vercel > seu projeto > Logs, nunca na página pública.
-  // Mostra só tamanho e pontas dos valores, nunca o valor completo do secret.
-  const mask = (v) => (v ? `${v.slice(0, 3)}...${v.slice(-3)} (len:${v.length})` : 'AUSENTE');
-  console.log('[DEBUG melhorenvio]', {
-    baseUrl,
-    clientId: process.env.MELHOR_ENVIO_CLIENT_ID,
-    clientSecret: mask(process.env.MELHOR_ENVIO_CLIENT_SECRET),
-    redirectUri: process.env.MELHOR_ENVIO_REDIRECT_URI,
-  });
+  // ATENÇÃO: aqui mostra o secret COMPLETO só pra comparação manual sua com
+  // o painel do Melhor Envio. Remover assim que resolvido.
+  console.log('[DEBUG melhorenvio] clientId:', process.env.MELHOR_ENVIO_CLIENT_ID);
+  console.log('[DEBUG melhorenvio] clientSecret completo:', process.env.MELHOR_ENVIO_CLIENT_SECRET);
+  console.log('[DEBUG melhorenvio] redirectUri:', process.env.MELHOR_ENVIO_REDIRECT_URI);
+  console.log('[DEBUG melhorenvio] baseUrl:', baseUrl);
   // --- FIM DO LOG TEMPORÁRIO ---
 
   try {
@@ -48,7 +46,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         grant_type: 'authorization_code',
-        client_id: process.env.MELHOR_ENVIO_CLIENT_ID,
+        client_id: Number(process.env.MELHOR_ENVIO_CLIENT_ID),
         client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
         redirect_uri: process.env.MELHOR_ENVIO_REDIRECT_URI,
         code,
