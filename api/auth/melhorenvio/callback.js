@@ -38,21 +38,21 @@ export default async function handler(req, res) {
   // --- FIM DO LOG TEMPORÁRIO ---
 
   try {
-    const params = new URLSearchParams({
-      grant_type: 'authorization_code',
-      client_id: process.env.MELHOR_ENVIO_CLIENT_ID,
-      client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
-      redirect_uri: process.env.MELHOR_ENVIO_REDIRECT_URI,
-      code,
-    });
-
     const tokenResponse = await fetch(`${baseUrl}/oauth/token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         Accept: 'application/json',
+        // Obrigatório pela API do Melhor Envio: nome do app + email de contato
+        'User-Agent': 'Orby (azevedocaio03@gmail.com)',
       },
-      body: params.toString(),
+      body: JSON.stringify({
+        grant_type: 'authorization_code',
+        client_id: process.env.MELHOR_ENVIO_CLIENT_ID,
+        client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
+        redirect_uri: process.env.MELHOR_ENVIO_REDIRECT_URI,
+        code,
+      }),
     });
 
     const tokenData = await tokenResponse.json();
