@@ -25,6 +25,18 @@ export default async function handler(req, res) {
 
   const baseUrl = process.env.MELHOR_ENVIO_BASE_URL;
 
+  // --- LOG TEMPORÁRIO DE DEBUG (remover depois de resolver) ---
+  // Aparece só no painel Vercel > seu projeto > Logs, nunca na página pública.
+  // Mostra só tamanho e pontas dos valores, nunca o valor completo do secret.
+  const mask = (v) => (v ? `${v.slice(0, 3)}...${v.slice(-3)} (len:${v.length})` : 'AUSENTE');
+  console.log('[DEBUG melhorenvio]', {
+    baseUrl,
+    clientId: process.env.MELHOR_ENVIO_CLIENT_ID,
+    clientSecret: mask(process.env.MELHOR_ENVIO_CLIENT_SECRET),
+    redirectUri: process.env.MELHOR_ENVIO_REDIRECT_URI,
+  });
+  // --- FIM DO LOG TEMPORÁRIO ---
+
   try {
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
