@@ -26,19 +26,21 @@ export default async function handler(req, res) {
   const baseUrl = process.env.MELHOR_ENVIO_BASE_URL;
 
   try {
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: process.env.MELHOR_ENVIO_CLIENT_ID,
+      client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
+      redirect_uri: process.env.MELHOR_ENVIO_REDIRECT_URI,
+      code,
+    });
+
     const tokenResponse = await fetch(`${baseUrl}/oauth/token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         Accept: 'application/json',
       },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        client_id: process.env.MELHOR_ENVIO_CLIENT_ID,
-        client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
-        redirect_uri: process.env.MELHOR_ENVIO_REDIRECT_URI,
-        code,
-      }),
+      body: params.toString(),
     });
 
     const tokenData = await tokenResponse.json();
