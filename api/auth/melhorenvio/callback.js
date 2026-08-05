@@ -36,6 +36,16 @@ export default async function handler(req, res) {
   // --- FIM DO LOG TEMPORÁRIO ---
 
   try {
+    const requestBody = {
+      grant_type: 'authorization_code',
+      client_id: Number(process.env.MELHOR_ENVIO_CLIENT_ID),
+      client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
+      redirect_uri: process.env.MELHOR_ENVIO_REDIRECT_URI,
+      code,
+    };
+
+    console.log('[DEBUG melhorenvio] body enviado:', JSON.stringify(requestBody));
+
     const tokenResponse = await fetch(`${baseUrl}/oauth/token`, {
       method: 'POST',
       headers: {
@@ -44,16 +54,19 @@ export default async function handler(req, res) {
         // Obrigatório pela API do Melhor Envio: nome do app + email de contato
         'User-Agent': 'Orby (azevedocaio03@gmail.com)',
       },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        client_id: Number(process.env.MELHOR_ENVIO_CLIENT_ID),
-        client_secret: process.env.MELHOR_ENVIO_CLIENT_SECRET,
-        redirect_uri: process.env.MELHOR_ENVIO_REDIRECT_URI,
-        code,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
-    const tokenData = await tokenResponse.json();
+    const rawText = await tokenResponse.text();
+    console.log('[DEBUG melhorenvio] status da resposta:', tokenResponse.status);
+    console.log('[DEBUG melhorenvio] resposta crua:', rawText);
+
+    let tokenData;
+    try {
+      tokenData = JSON.parse(rawText);
+    } catch {
+      return res.status(500).send(`Resposta não era JSON válido: ${rawText}`);
+    }
 
     if (!tokenResponse.ok) {
       console.error('Erro ao trocar code por token:', tokenData);
