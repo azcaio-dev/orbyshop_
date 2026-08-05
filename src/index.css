@@ -6033,3 +6033,207 @@ button:hover {
   font-size: 13px;
   padding: 8px 10px;
 }
+
+/* === Simulação de frete SEDEX no carrinho === */
+
+.cart-frete-box {
+  margin: 14px 0;
+  border: 1px solid #EEEDFE;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #FAFAFF;
+}
+
+.cart-frete-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #534AB7;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.cart-frete-toggle:hover {
+  background: #EEEDFE;
+}
+
+.cart-frete-content {
+  padding: 0 14px 14px;
+  animation: cartFreteExpand 0.18s ease;
+}
+
+@keyframes cartFreteExpand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cart-frete-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.cart-frete-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #DAD8F7;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #333;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.cart-frete-input-row input:focus {
+  border-color: #7F77DD;
+}
+
+.cart-frete-input-row button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #7F77DD;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.cart-frete-input-row button:hover:not(:disabled) {
+  background: #534AB7;
+}
+
+.cart-frete-input-row button:disabled {
+  background: #BFBBEE;
+  cursor: not-allowed;
+}
+
+.cart-frete-erro {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: #D8483C;
+}
+
+.cart-frete-resultados {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cart-frete-opcao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #EEEDFE;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.cart-frete-opcao span:first-child {
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.cart-frete-opcao span:nth-child(2) {
+  color: #888;
+  white-space: nowrap;
+}
+
+.cart-frete-opcao strong {
+  color: #534AB7;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+/* Mobile: empilha valor e prazo pra não apertar demais */
+@media (max-width: 420px) {
+  .cart-frete-opcao {
+    flex-wrap: wrap;
+  }
+
+  .cart-frete-opcao span:first-child {
+    flex-basis: 100%;
+  }
+}
+
+/* === Toggle switch estilo iOS (usado em Configurações > Frete, etc.) === */
+
+.orby-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.orby-toggle-row span:first-child {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.orby-ios-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.orby-ios-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.orby-ios-switch-slider {
+  position: absolute;
+  inset: 0;
+  background: #DAD8E8;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.orby-ios-switch-slider::before {
+  content: '';
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.orby-ios-switch input:checked + .orby-ios-switch-slider {
+  background: #7F77DD;
+}
+
+.orby-ios-switch input:checked + .orby-ios-switch-slider::before {
+  transform: translateX(20px);
+}
+
+.orby-ios-switch input:focus-visible + .orby-ios-switch-slider {
+  outline: 2px solid #534AB7;
+  outline-offset: 2px;
+}

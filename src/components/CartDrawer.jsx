@@ -9,6 +9,13 @@ function CartDrawer({ open, onClose }) {
   const { cart, clearCart, increaseQuantity, decreaseQuantity, vendedorSlug } = useCart()
   const [vendedorPhone, setVendedorPhone] = useState(null)
 
+  // --- Simulação de frete SEDEX ---
+  const [freteAberto, setFreteAberto] = useState(false)
+  const [cepInput, setCepInput] = useState('')
+  const [freteLoading, setFreteLoading] = useState(false)
+  const [freteErro, setFreteErro] = useState('')
+  const [freteOpcoes, setFreteOpcoes] = useState(null)
+
   // Busca o WhatsApp do vendedor ativo
   useEffect(() => {
     if (!vendedorSlug || !storeSlug) return
@@ -42,6 +49,63 @@ function CartDrawer({ open, onClose }) {
   }
 
   const total = cart.reduce((acc, item) => acc + item.quantity * formatPrice(item.price), 0)
+  const totalItens = cart.reduce((acc, item) => acc + item.quantity, 0)
+
+  function handleCepChange(e) {
+    // Aplica máscara 00000-000 enquanto digita
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 8)
+    const masked = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits
+    setCepInput(masked)
+    setFreteErro('')
+  }
+
+  async function handleSimularFrete() {
+    const cepLimpo = cepInput.replace(/\D/g, '')
+
+    if (cepLimpo.length !== 8) {
+      setFreteErro('Digite um CEP válido (8 dígitos).')
+      return
+    }
+
+    setFreteLoading(true)
+    setFreteErro('')
+    setFreteOpcoes(null)
+
+    try {
+      const response = await fetch('/api/frete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cepOrigem: store.frete.cepOrigem,
+          cepDestino: cepLimpo,
+          totalItens,
+          itensPorPacote: store.frete.itensPorPacote,
+          pesoMedioPorItem: store.frete.pesoMedioPorItem,
+          pesoEmbalagemVazia: store.frete.pesoEmbalagemVazia,
+          dimensoes: store.frete.dimensoes,
+          valorDeclarado: total,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setFreteErro(data.error || 'Não foi possível calcular o frete agora.')
+        return
+      }
+
+      if (!data.opcoes || data.opcoes.length === 0) {
+        setFreteErro('Nenhuma opção de frete encontrada para esse CEP.')
+        return
+      }
+
+      setFreteOpcoes(data.opcoes)
+    } catch {
+      setFreteErro('Não foi possível calcular o frete agora. Tente novamente.')
+    }
+
+    setFreteLoading(false)
+  }
 
   const message = cart.map((item) => {
     const price = formatPrice(item.price)
@@ -112,6 +176,55 @@ Pode me ajudar com o pagamento e entrega?`
           {cart.length > 0 && (
             <>
               <h3 className="cart-total">Total: {fmt(total)}</h3>
+
+              {/* --- Simulação de frete SEDEX (só aparece se a loja ativou) --- */}
+              {store.frete?.ativo && (
+                <div className="cart-frete-box">
+                  <button
+                    type="button"
+                    className="cart-frete-toggle"
+                    onClick={() => setFreteAberto((v) => !v)}
+                  >
+                    É de outro estado? Simule o frete via SEDEX {freteAberto ? '▲' : '▼'}
+                  </button>
+
+                  {freteAberto && (
+                    <div className="cart-frete-content">
+                      <div className="cart-frete-input-row">
+                        <input
+                          type="text"
+                          placeholder="Seu CEP"
+                          value={cepInput}
+                          onChange={handleCepChange}
+                          maxLength={9}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSimularFrete}
+                          disabled={freteLoading}
+                        >
+                          {freteLoading ? 'Calculando...' : 'Simular'}
+                        </button>
+                      </div>
+
+                      {freteErro && <p className="cart-frete-erro">{freteErro}</p>}
+
+                      {freteOpcoes && (
+                        <div className="cart-frete-resultados">
+                          {freteOpcoes.map((opcao, i) => (
+                            <div key={i} className="cart-frete-opcao">
+                              <span>{opcao.transportadora} - {opcao.servico}</span>
+                              <span>{opcao.prazoDias} dias úteis</span>
+                              <strong>{fmt(opcao.valor)}</strong>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button type="button" onClick={() => window.location.href = whatsappLink} className="whatsapp-button">
                 Finalizar no WhatsApp
               </button>
