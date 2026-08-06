@@ -40,6 +40,7 @@ function AdminProducts() {
   const [variations, setVariations] = useState([])
   const [toast, setToast] = useState({ message: '', type: 'success' })
   const [productSearch, setProductSearch] = useState('')
+  const [perfilEnvioId, setPerfilEnvioId] = useState('')
   const navigate = useNavigate()
   const formRef = useRef(null)
 
@@ -67,6 +68,19 @@ function AdminProducts() {
     setSizeType(restoredSizeType)
     setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : [])
   }, [storeSlug])
+
+  // --- Frete: perfis de envio cadastrados na loja ---
+  const perfisEnvio = store?.frete?.perfis || []
+  const freteAtivo = store?.frete?.ativo === true
+  // Só exige escolha do lojista quando existe mais de um perfil; com 0 ou 1, é automático
+  const precisaEscolherPerfil = freteAtivo && perfisEnvio.length > 1
+
+  // Se a loja só tem 1 perfil, aplica ele automaticamente (sem exibir seletor)
+  useEffect(() => {
+    if (freteAtivo && perfisEnvio.length === 1 && !editingId) {
+      setPerfilEnvioId(perfisEnvio[0].id)
+    }
+  }, [freteAtivo, perfisEnvio.length, editingId])
 
   const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))]
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
@@ -173,6 +187,8 @@ function AdminProducts() {
     setProductSection(''); setSizeType(restoredSizeType); setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : []); setCostPrice(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
     setVariationFile(null); setVariationSizeType('letter'); setVariationSizes([])
     setVariationSizeStocks({}); setVariations([])
+    // Se só existe 1 perfil de envio, já deixa ele pré-selecionado; senão, limpa
+    setPerfilEnvioId(freteAtivo && perfisEnvio.length === 1 ? perfisEnvio[0].id : '')
   }
 
   function handleEdit(product) {
@@ -183,6 +199,7 @@ function AdminProducts() {
     setSizeStocks(product.sizeStocks || {}); setVariations(product.variations || [])
     setShowVariationForm(false); setVariationColorName(''); setVariationFile(null)
     setVariationSizeType('letter'); setVariationSizes([]); setVariationSizeStocks({}); setProductImages([null])
+    setPerfilEnvioId(product.perfilEnvioId || (freteAtivo && perfisEnvio.length === 1 ? perfisEnvio[0].id : ''))
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
@@ -197,12 +214,20 @@ function AdminProducts() {
   async function handleSubmit(e) {
     e.preventDefault()
     if (sizes.length === 0) { showToast('Selecione pelo menos um tamanho', 'warning'); return }
+    if (precisaEscolherPerfil && !perfilEnvioId) {
+      showToast('Selecione o modelo de envio deste produto', 'warning')
+      return
+    }
     setLoading(true)
     try {
+      // Perfil de envio: só grava se o frete estiver ativo e existir um perfil aplicável
+      const perfilParaSalvar = freteAtivo && perfilEnvioId ? perfilEnvioId : null
+
       if (editingId) {
         const updatedData = { name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod,
           description, mainColor, brand, category, productSection, sizeType, sizes, variations,
-          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0 }
+          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0,
+          perfilEnvioId: perfilParaSalvar }
         const validImages = productImages.filter(Boolean)
         if (validImages.length > 0) updatedData.images = await Promise.all(validImages.map((f) => uploadImage(f)))
         await updateDoc(doc(db, 'stores', storeSlug, 'products', editingId), updatedData)
@@ -215,6 +240,7 @@ function AdminProducts() {
           name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod, description, mainColor,
           brand, category, productSection, sizeType, sizes, images: uploadedImages, variations,
           costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0,
+          perfilEnvioId: perfilParaSalvar,
         })
         showToast('Produto cadastrado com sucesso!', 'success')
       }
@@ -305,6 +331,19 @@ function AdminProducts() {
 
             <textarea placeholder="Descrição" value={description} onChange={(e) => setDescription(e.target.value)} required />
             <input type="text" placeholder="Cor principal do produto (opcional)" value={mainColor} onChange={(e) => setMainColor(e.target.value)} />
+
+            {/* --- Modelo de envio: só aparece se o frete estiver ativo e houver mais de 1 perfil --- */}
+            {precisaEscolherPerfil && (
+              <div className="orby-field">
+                <label>Modelo de envio</label>
+                <select value={perfilEnvioId} onChange={(e) => setPerfilEnvioId(e.target.value)} required>
+                  <option value="">Selecione um perfil de envio</option>
+                  {perfisEnvio.map((perfil) => (
+                    <option key={perfil.id} value={perfil.id}>{perfil.nome}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="product-images-box">
               <p>Fotos do produto</p>

@@ -1,8 +1,9 @@
 // api/frete.js
 //
-// Calcula a cotação de frete (Correios/SEDEX e outras transportadoras)
-// via API da Frenet, dividindo o carrinho em pacotes conforme a
-// configuração da loja (dimensões padrão, peso por item, itens por pacote).
+// Calcula a cotação de frete (Correios/SEDEX e outras transportadoras) via
+// Frenet. Agora suporta múltiplos "perfis de envio" — cada grupo de
+// produtos com peso/dimensão diferentes vira seus próprios pacotes, e todos
+// entram juntos numa única cotação.
 //
 // Variável de ambiente necessária na Vercel:
 //   FRENET_TOKEN
@@ -12,33 +13,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método não permitido, use POST.' });
   }
 
-  const {
-    cepOrigem,
-    cepDestino,
-    totalItens,
-    itensPorPacote,
-    pesoMedioPorItem, // em kg
-    pesoEmbalagemVazia, // em kg
-    dimensoes, // { altura, largura, comprimento } em cm
-    valorDeclarado, // opcional, valor total dos itens em R$
-  } = req.body || {};
+  const { cepOrigem, cepDestino, itens, perfis, valorDeclarado } = req.body || {};
 
-  // --- Validação básica dos dados recebidos ---
-  const camposObrigatorios = {
-    cepOrigem,
-    cepDestino,
-    totalItens,
-    itensPorPacote,
-    pesoMedioPorItem,
-    pesoEmbalagemVazia,
-    dimensoes,
-  };
-  const faltando = Object.entries(camposObrigatorios)
-    .filter(([, v]) => v === undefined || v === null || v === '')
-    .map(([k]) => k);
-
-  if (faltando.length > 0) {
-    return res.status(400).json({ error: `Campos ausentes: ${faltando.join(', ')}` });
+  // --- Validação básica ---
+  if (!cepOrigem || !cepDestino) {
+    return res.status(400).json({ error: 'CEP de origem e destino são obrigatórios.' });
+  }
+  if (!Array.isArray(itens) || itens.length === 0) {
+    return res.status(400).json({ error: 'Nenhum item informado para calcular o frete.' });
+  }
+  if (!Array.isArray(perfis) || perfis.length === 0) {
+    return res.status(400).json({ error: 'Nenhum perfil de envio configurado para essa loja.' });
   }
 
   const cepOrigemLimpo = String(cepOrigem).replace(/\D/g, '');
@@ -48,26 +33,50 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'CEP inválido. Use o formato de 8 dígitos.' });
   }
 
-  // --- Monta os pacotes: divide os itens em grupos de "itensPorPacote" ---
-  // Cada pacote leva o peso da embalagem vazia + peso dos itens que ele carrega.
-  // O último pacote pode ter menos itens, então pesa menos que um pacote cheio.
-  const qtdPacotes = Math.ceil(totalItens / itensPorPacote);
+  // --- Agrupa a quantidade total de itens por perfilEnvioId ---
+  const quantidadePorPerfil = {};
+  for (const item of itens) {
+    if (!item.perfilEnvioId || !item.quantidade) {
+      return res.status(400).json({ error: 'Todos os itens precisam ter um modelo de envio definido.' });
+    }
+    quantidadePorPerfil[item.perfilEnvioId] = (quantidadePorPerfil[item.perfilEnvioId] || 0) + Number(item.quantidade);
+  }
+
+  // --- Monta os pacotes de cada perfil, do mesmo jeito que fazíamos antes, ---
+  // --- mas agora repetindo o processo pra cada perfil separadamente ---
   const shippingItemArray = [];
 
-  let itensRestantes = totalItens;
-  for (let i = 0; i < qtdPacotes; i += 1) {
-    const itensNessePacote = Math.min(itensPorPacote, itensRestantes);
-    const pesoDoPacote = Number(pesoEmbalagemVazia) + itensNessePacote * Number(pesoMedioPorItem);
+  for (const [perfilId, totalItensDoPerfil] of Object.entries(quantidadePorPerfil)) {
+    const perfil = perfis.find((p) => p.id === perfilId);
 
-    shippingItemArray.push({
-      Height: Number(dimensoes.altura),
-      Length: Number(dimensoes.comprimento),
-      Width: Number(dimensoes.largura),
-      Weight: Number(pesoDoPacote.toFixed(3)),
-      Quantity: 1,
-    });
+    if (!perfil) {
+      return res.status(400).json({ error: `Perfil de envio "${perfilId}" não encontrado na loja.` });
+    }
 
-    itensRestantes -= itensNessePacote;
+    const {
+      itensPorPacote = 1,
+      pesoMedioPorItem = 0,
+      pesoEmbalagemVazia = 0,
+      dimensoes = {},
+    } = perfil;
+
+    const qtdPacotes = Math.ceil(totalItensDoPerfil / itensPorPacote);
+    let itensRestantes = totalItensDoPerfil;
+
+    for (let i = 0; i < qtdPacotes; i += 1) {
+      const itensNessePacote = Math.min(itensPorPacote, itensRestantes);
+      const pesoDoPacote = Number(pesoEmbalagemVazia) + itensNessePacote * Number(pesoMedioPorItem);
+
+      shippingItemArray.push({
+        Height: Number(dimensoes.altura) || 1,
+        Length: Number(dimensoes.comprimento) || 1,
+        Width: Number(dimensoes.largura) || 1,
+        Weight: Number(pesoDoPacote.toFixed(3)) || 0.1,
+        Quantity: 1,
+      });
+
+      itensRestantes -= itensNessePacote;
+    }
   }
 
   try {
@@ -92,8 +101,6 @@ export default async function handler(req, res) {
       return res.status(frenetResponse.status).json({ error: 'Erro ao consultar frete.', detalhe: data });
     }
 
-    // A Frenet retorna um array de serviços; filtramos erros e simplificamos
-    // pro formato que o carrinho precisa.
     const opcoes = (data.ShippingSevicesArray || [])
       .filter((servico) => !servico.Error)
       .map((servico) => ({
@@ -103,7 +110,7 @@ export default async function handler(req, res) {
         valor: Number(servico.ShippingPrice),
       }));
 
-    return res.status(200).json({ opcoes, pacotes: qtdPacotes });
+    return res.status(200).json({ opcoes, pacotes: shippingItemArray.length });
   } catch (err) {
     console.error('Erro inesperado ao calcular frete:', err);
     return res.status(500).json({ error: 'Erro inesperado ao calcular frete.' });

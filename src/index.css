@@ -6237,3 +6237,300 @@ button:hover {
   outline: 2px solid #534AB7;
   outline-offset: 2px;
 }
+
+/* === Frete via SEDEX / Perfis de envio (tela de Configurações) === */
+
+.orby-card {
+  background: #fff;
+  border: 1px solid #EEEDFE;
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+
+.orby-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2E2B4A;
+  margin: 0 0 4px;
+}
+
+.orby-card-subtitle {
+  font-size: 13px;
+  color: #7A7890;
+  margin: 0;
+  max-width: 520px;
+  line-height: 1.4;
+}
+
+.orby-card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* --- Toggle row (usado no header do card de frete) --- */
+.orby-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* --- Toggle switch estilo iOS --- */
+.orby-ios-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.orby-ios-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.orby-ios-switch-slider {
+  position: absolute;
+  inset: 0;
+  background: #DAD8E8;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.orby-ios-switch-slider::before {
+  content: '';
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.orby-ios-switch input:checked + .orby-ios-switch-slider {
+  background: #7F77DD;
+}
+
+.orby-ios-switch input:checked + .orby-ios-switch-slider::before {
+  transform: translateX(20px);
+}
+
+.orby-ios-switch input:focus-visible + .orby-ios-switch-slider {
+  outline: 2px solid #534AB7;
+  outline-offset: 2px;
+}
+
+/* --- Campos genéricos (label + input agrupados) --- */
+.orby-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.orby-field label,
+.orby-field > span:first-child {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #534AB7;
+}
+
+.orby-field input,
+.orby-field select {
+  padding: 10px 12px;
+  border: 1px solid #DAD8F7;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #333;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.orby-field input:focus,
+.orby-field select:focus {
+  border-color: #7F77DD;
+}
+
+.orby-field-hint {
+  font-size: 11.5px;
+  color: #999;
+}
+
+.orby-field-mini label,
+.orby-field-mini > span:first-child {
+  font-size: 11px;
+  color: #999;
+  font-weight: 500;
+}
+
+/* --- Grids compactos (2 ou 3 colunas) --- */
+.orby-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.orby-form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .orby-form-grid-2,
+  .orby-form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Estado vazio (sem perfis cadastrados) --- */
+.orby-empty-state {
+  font-size: 13.5px;
+  color: #999;
+  padding: 18px 0 4px;
+}
+
+/* --- Tabela de perfis de envio --- */
+.orby-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.orby-table thead th {
+  text-align: left;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #999;
+  font-weight: 600;
+  padding: 0 10px 10px;
+  border-bottom: 1px solid #EEEDFE;
+}
+
+.orby-table tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #F4F3FF;
+  color: #333;
+}
+
+.orby-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.orby-table-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.orby-table-actions button {
+  border: none;
+  background: #F4F3FF;
+  color: #534AB7;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.orby-table-actions button:hover {
+  background: #E3E1FB;
+}
+
+/* --- Botões primário/secundário reutilizáveis --- */
+.orby-btn-primary {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #7F77DD;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.orby-btn-primary:hover:not(:disabled) {
+  background: #534AB7;
+}
+
+.orby-btn-primary:disabled {
+  background: #BFBBEE;
+  cursor: not-allowed;
+}
+
+.orby-btn-secondary {
+  padding: 10px 18px;
+  border: 1px solid #DAD8F7;
+  border-radius: 8px;
+  background: #fff;
+  color: #534AB7;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.orby-btn-secondary:hover {
+  background: #F4F3FF;
+}
+
+/* --- Modal de criar/editar perfil --- */
+.orby-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(46, 43, 74, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: orbyModalFade 0.15s ease;
+}
+
+@keyframes orbyModalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.orby-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 26px 28px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(46, 43, 74, 0.25);
+}
+
+.orby-modal h3 {
+  margin: 0 0 18px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #2E2B4A;
+}
+
+.orby-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}

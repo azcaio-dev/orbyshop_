@@ -49,7 +49,7 @@ function CartDrawer({ open, onClose }) {
   }
 
   const total = cart.reduce((acc, item) => acc + item.quantity * formatPrice(item.price), 0)
-  const totalItens = cart.reduce((acc, item) => acc + item.quantity, 0)
+  const perfisEnvio = store.frete?.perfis || []
 
   function handleCepChange(e) {
     // Aplica máscara 00000-000 enquanto digita
@@ -67,6 +67,20 @@ function CartDrawer({ open, onClose }) {
       return
     }
 
+    // Resolve o perfil de envio de cada item: usa o salvo no produto, ou o
+    // único perfil da loja caso ela só tenha um cadastrado.
+    const itensParaCotar = []
+    for (const item of cart) {
+      const perfilId = item.perfilEnvioId || (perfisEnvio.length === 1 ? perfisEnvio[0].id : null)
+
+      if (!perfilId) {
+        setFreteErro(`"${item.name}" não tem um modelo de envio configurado. Fale com a loja.`)
+        return
+      }
+
+      itensParaCotar.push({ perfilEnvioId: perfilId, quantidade: item.quantity })
+    }
+
     setFreteLoading(true)
     setFreteErro('')
     setFreteOpcoes(null)
@@ -78,11 +92,8 @@ function CartDrawer({ open, onClose }) {
         body: JSON.stringify({
           cepOrigem: store.frete.cepOrigem,
           cepDestino: cepLimpo,
-          totalItens,
-          itensPorPacote: store.frete.itensPorPacote,
-          pesoMedioPorItem: store.frete.pesoMedioPorItem,
-          pesoEmbalagemVazia: store.frete.pesoEmbalagemVazia,
-          dimensoes: store.frete.dimensoes,
+          itens: itensParaCotar,
+          perfis: perfisEnvio,
           valorDeclarado: total,
         }),
       })
