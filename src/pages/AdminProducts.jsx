@@ -20,6 +20,7 @@ function AdminProducts() {
   const [oldPrice, setOldPrice] = useState('')
   const [price, setPrice] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('vista')
+  const [pixPrice, setPixPrice] = useState('')
   const [description, setDescription] = useState('')
   const [mainColor, setMainColor] = useState('')
   const [productImages, setProductImages] = useState([null])
@@ -182,7 +183,7 @@ function AdminProducts() {
 
   function clearForm() {
     const restoredSizeType = getLastSizeType()
-    setName(''); setOldPrice(''); setPrice(''); setPaymentMethod('vista'); setDescription(''); setMainColor('')
+    setName(''); setOldPrice(''); setPrice(''); setPaymentMethod('vista'); setPixPrice(''); setDescription(''); setMainColor('')
     setProductImages([null]); setEditingId(null); setBrand(''); setCategory('')
     setProductSection(''); setSizeType(restoredSizeType); setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : []); setCostPrice(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
     setVariationFile(null); setVariationSizeType('letter'); setVariationSizes([])
@@ -193,7 +194,7 @@ function AdminProducts() {
 
   function handleEdit(product) {
     setEditingId(product.id); setName(product.name || ''); setOldPrice(product.oldPrice ?? '')
-    setPrice(product.price || ''); setPaymentMethod(product.paymentMethod || 'vista'); setDescription(product.description || ''); setMainColor(product.mainColor || '')
+    setPrice(product.price || ''); setPaymentMethod(product.paymentMethod || 'vista'); setPixPrice(product.pixPrice ?? ''); setDescription(product.description || ''); setMainColor(product.mainColor || '')
     setBrand(product.brand || ''); setCategory(product.category || ''); setProductSection(product.productSection || '')
     setSizeType(product.sizeType || 'letter'); setSizes(product.sizes || []); setCostPrice(product.costPrice || '')
     setSizeStocks(product.sizeStocks || {}); setVariations(product.variations || [])
@@ -225,6 +226,7 @@ function AdminProducts() {
 
       if (editingId) {
         const updatedData = { name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod,
+          pixPrice: pixPrice ? Number(pixPrice) : null,
           description, mainColor, brand, category, productSection, sizeType, sizes, variations,
           costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0,
           perfilEnvioId: perfilParaSalvar }
@@ -237,7 +239,9 @@ function AdminProducts() {
         if (validImages.length === 0) { showToast('Selecione pelo menos uma foto do produto', 'warning'); setLoading(false); return }
         const uploadedImages = await Promise.all(validImages.map((f) => uploadImage(f)))
         await addDoc(collection(db, 'stores', storeSlug, 'products'), {
-          name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod, description, mainColor,
+          name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod,
+          pixPrice: pixPrice ? Number(pixPrice) : null,
+          description, mainColor,
           brand, category, productSection, sizeType, sizes, images: uploadedImages, variations,
           costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0,
           perfilEnvioId: perfilParaSalvar,
@@ -276,12 +280,33 @@ function AdminProducts() {
             <div className="form-row-3">
               <input type="number" placeholder="Preço antigo (opcional)" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} />
               <input type="number" placeholder="Preço atual" value={price} onChange={(e) => setPrice(e.target.value)} required />
-              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              <select
+                value={paymentMethod}
+                onChange={(e) => {
+                  setPaymentMethod(e.target.value)
+                  if (e.target.value === 'vista') setPixPrice('')
+                }}
+              >
                 {paymentMethodOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
             </div>
+
+            {paymentMethod !== 'vista' && (
+              <div className="orby-field">
+                <label>Valor no PIX (opcional)</label>
+                <input
+                  type="number"
+                  placeholder="Deixe em branco para usar o desconto padrão da loja"
+                  value={pixPrice}
+                  onChange={(e) => setPixPrice(e.target.value)}
+                />
+                <span className="field-hint">
+                  Preencha só se este produto tiver um valor de PIX diferente do calculado automaticamente pela loja.
+                </span>
+              </div>
+            )}
 
             <div className="form-row-3">
               {isPro && (
@@ -448,6 +473,9 @@ function AdminProducts() {
                     <strong>{product.name}</strong>
                     <p>{Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     <p>{product.paymentMethod && product.paymentMethod !== 'vista' ? `${product.paymentMethod} sem juros` : 'À vista'}</p>
+                    {product.pixPrice != null && (
+                      <p>PIX: {Number(product.pixPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    )}
                     {product.brand && <p>{brandLabel}: {product.brand}</p>}
                     {product.category && <p>Categorias: {product.category}</p>}
                     <p>{product.available ? 'Disponível' : 'Indisponível'}</p>

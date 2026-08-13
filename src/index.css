@@ -6534,3 +6534,65 @@ button:hover {
   gap: 10px;
   margin-top: 6px;
 }
+
+/* ===== PIX / Parcelamento no ProductDetail ===== */
+/* Substituir o bloco antigo .payment-info-block no index.css por este */
+
+/* Agrupa preço + selo "no PIX" pra nunca quebrar linha, mesmo dentro
+   de um .product-price-box em flex-column (usado pelo "de/por" do outlet) */
+.price-pix-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.pix-label-inline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted, #6b7280);
+  white-space: nowrap;
+}
+
+/* Nota secundária: sempre menor e mais discreta que o preço em destaque,
+   pra não competir visualmente com .product-current-price */
+.price-alt-note {
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #6b7280);
+  margin: 2px 0 12px;
+}
+
+.installments-info {
+  font-size: 0.9rem;
+  color: var(--color-text-muted, #6b7280);
+  margin: 2px 0 12px;
+}
+
+/* ===== Ajustes finos pedidos ===== */
+
+/* 1) Menos espaço entre o preço e a linha "ou 2x de..."
+   !important pra garantir que vence qualquer regra de .price-row
+   já existente no index.css, não importa a ordem de carregamento. */
+.price-row {
+  margin-bottom: 0 !important;
+}
+.price-alt-note,
+.installments-info {
+  margin-top: -4px !important;
+  margin-bottom: 12px !important;
+}
+
+/* 2) Preço na mesma cor do nome do produto — usa a variável real
+   definida em useStoreTheme.js a partir do cadastro da loja. */
+.product-current-price {
+  color: var(--color-text) !important;
+}
+
+/* 3) Remove a borda do botão do WhatsApp */
+.whatsapp-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}

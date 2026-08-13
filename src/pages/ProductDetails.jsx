@@ -22,10 +22,34 @@ function sizeHasStock(product, variation, size) {
   return Number(sizeStocks[size] || 0) > 0
 }
 
-// ✅ Formata a forma de pagamento pra exibição
+// ✅ Formata a forma de pagamento pra exibição (fallback quando não há PIX nem parcelamento configurados)
 function formatPaymentMethod(paymentMethod) {
   if (!paymentMethod || paymentMethod === 'vista') return 'À vista'
   return `${paymentMethod} sem juros`
+}
+
+// ✅ Preço no PIX: só existe para produtos parcelados (Nx sem juros).
+// Produto à vista nunca mostra a linha de PIX — o price já é o valor final.
+// Valor manual do produto vence, senão calcula pelo desconto padrão da loja.
+function getPixPrice(product, storePaymentInfo) {
+  if (!product.paymentMethod || product.paymentMethod === 'vista') return null
+  if (product.pixPrice != null) return Number(product.pixPrice)
+  if (storePaymentInfo?.pixDiscountPercent > 0) {
+    return Number(product.price) * (1 - storePaymentInfo.pixDiscountPercent / 100)
+  }
+  return null
+}
+
+// ✅ Parcelamento: reaproveita o paymentMethod ('vista' | '2x'...'10x') já existente
+function getInstallmentInfo(product) {
+  if (!product.paymentMethod || product.paymentMethod === 'vista') return null
+  const count = parseInt(product.paymentMethod, 10)
+  if (!count) return null
+  return { count, value: Number(product.price) / count }
+}
+
+function formatBRL(value) {
+  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 function ProductDetails() {
@@ -117,6 +141,9 @@ function ProductDetails() {
 
   const formattedPrice = Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+  const pixPrice = getPixPrice(product, store.paymentInfo)
+  const installmentInfo = getInstallmentInfo(product)
+
   const availableSizes = getSizesWithStock(product, selectedVariation)
   const allSizes = selectedVariation?.sizes || product.sizes || []
   const outOfStockSizes = allSizes.filter((size) => !availableSizes.includes(size))
@@ -176,10 +203,29 @@ Tamanho: ${selectedSize || '-'}`
                   {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
               )}
-              <strong className="product-current-price">{formattedPrice}</strong>
+              <span className="price-pix-row">
+                <strong className="product-current-price">
+                  {pixPrice != null ? formatBRL(pixPrice) : formattedPrice}
+                </strong>
+                {pixPrice != null && <span className="pix-label-inline">no PIX</span>}
+              </span>
             </div>
-            <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
           </div>
+
+          {/* ✅ Linha secundária: mostra a alternativa (preço cheio / parcelado).
+              Nunca dois valores com o mesmo destaque ao mesmo tempo. */}
+          {pixPrice != null ? (
+            <p className="price-alt-note">
+              ou {formattedPrice}
+              {installmentInfo && ` em ${installmentInfo.count}x de ${formatBRL(installmentInfo.value)} sem juros`}
+            </p>
+          ) : installmentInfo ? (
+            <p className="installments-info">
+              {installmentInfo.count}x de {formatBRL(installmentInfo.value)} sem juros
+            </p>
+          ) : (
+            <p className="installments-info">{formatPaymentMethod(product.paymentMethod)}</p>
+          )}
 
           <div className="product-description">
             <h3>Descrição</h3>

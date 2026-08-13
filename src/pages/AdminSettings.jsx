@@ -37,6 +37,11 @@ function AdminSettings() {
   const [modalAberto, setModalAberto] = useState(false)
   const [perfilEditando, setPerfilEditando] = useState(PERFIL_VAZIO)
 
+  // Configuração de desconto no PIX (padrão da loja — vale pra todo produto
+  // que não tiver um valor de PIX cadastrado manualmente)
+  const [pixDiscountPercent, setPixDiscountPercent] = useState('')
+  const [savingPix, setSavingPix] = useState(false)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savingCep, setSavingCep] = useState(false)
@@ -70,6 +75,12 @@ function AdminSettings() {
           setFreteAtivo(data.frete.ativo || false)
           setCepOrigem(data.frete.cepOrigem || '')
           setPerfis(data.frete.perfis || [])
+        }
+
+        if (data.paymentInfo) {
+          setPixDiscountPercent(
+            data.paymentInfo.pixDiscountPercent != null ? String(data.paymentInfo.pixDiscountPercent) : ''
+          )
         }
       }
     } catch (error) {
@@ -120,6 +131,25 @@ function AdminSettings() {
       showToast('Erro ao salvar CEP.', 'error')
     }
     setSavingCep(false)
+  }
+
+  // --- Desconto no PIX: salva sozinho ao sair do campo, mesmo padrão do CEP ---
+  function handlePixDiscountChange(e) {
+    const value = e.target.value.replace(/[^\d]/g, '').slice(0, 3)
+    setPixDiscountPercent(value)
+  }
+
+  async function handlePixDiscountBlur() {
+    setSavingPix(true)
+    try {
+      const storeRef = doc(db, 'stores', storeSlug)
+      const valor = Math.min(Number(pixDiscountPercent) || 0, 100)
+      await updateDoc(storeRef, { 'paymentInfo.pixDiscountPercent': valor })
+      showToast('Desconto no PIX salvo!', 'success')
+    } catch (error) {
+      showToast('Erro ao salvar desconto no PIX.', 'error')
+    }
+    setSavingPix(false)
   }
 
   // --- Perfis de envio (modelos de peso/dimensão) ---
@@ -311,8 +341,31 @@ function AdminSettings() {
           </button>
         </form>
 
-        {/* --- Seção de frete SEDEX/Correios --- */}
+        {/* --- Desconto no PIX --- */}
         <div className="orby-card" style={{ marginTop: '2rem' }}>
+          <h2 className="orby-card-title">Desconto no PIX</h2>
+          <p className="orby-card-subtitle">
+            Esse desconto vale para todos os produtos da loja, exceto os que já tiverem um
+            valor de PIX cadastrado manualmente no próprio produto — esses continuam usando
+            o valor que já está lá, sem alteração.
+          </p>
+
+          <div className="orby-field" style={{ maxWidth: 200, marginTop: 16 }}>
+            <label>Desconto no PIX (%)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={pixDiscountPercent}
+              onChange={handlePixDiscountChange}
+              onBlur={handlePixDiscountBlur}
+              placeholder="Ex: 10"
+            />
+            {savingPix && <span className="orby-field-hint">Salvando...</span>}
+          </div>
+        </div>
+
+        {/* --- Seção de frete SEDEX/Correios --- */}
+        <div className="orby-card" style={{ marginTop: '1.25rem' }}>
           <div className="orby-toggle-row">
             <div>
               <h2 className="orby-card-title">Frete via SEDEX/Correios</h2>
