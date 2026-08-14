@@ -3,11 +3,13 @@ import { useCart } from '../context/CartContext'
 import useStore from '../hooks/useStore'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../services/firebase'
+import { createOrderSnapshot } from '../services/orders'
 
 function CartDrawer({ open, onClose }) {
   const { store, loading: storeLoading, storeSlug } = useStore()
   const { cart, clearCart, increaseQuantity, decreaseQuantity, vendedorSlug } = useCart()
   const [vendedorPhone, setVendedorPhone] = useState(null)
+  const [finalizando, setFinalizando] = useState(false)
 
   // --- Simulação de frete SEDEX ---
   const [freteAberto, setFreteAberto] = useState(false)
@@ -128,7 +130,33 @@ Preço: ${fmt(price)}`
   // ✅ Usa o número do vendedor se disponível, senão usa o da loja
   const phone = vendedorPhone || String(store.whatsapp || '').replace(/\D/g, '')
 
-  const whatsappText = `${store.checkout?.messageIntro || 'Olá! Quero finalizar meu pedido:'}
+  // Salva o snapshot do pedido no Firestore e abre o WhatsApp já com o link
+  // do resumo (assim a loja consegue ver exatamente qual produto/cor/foto
+  // o cliente escolheu, mesmo com nomes repetidos no catálogo).
+  async function handleFinalizarPedido() {
+    if (finalizando) return
+    setFinalizando(true)
+
+    try {
+      const orderLink = await createOrderSnapshot(storeSlug, cart, total)
+
+      const whatsappText = `${store.checkout?.messageIntro || 'Olá! Quero finalizar meu pedido:'}
+
+*Itens:*
+${message}
+
+*Total:* ${fmt(total)}
+
+🔗 Resumo do pedido (com fotos): ${orderLink}
+
+Pode me ajudar com o pagamento e entrega?`
+
+      const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappText)}`
+      window.location.href = whatsappLink
+    } catch {
+      // Se salvar o pedido falhar (ex: sem internet), não trava o cliente:
+      // manda a mensagem sem o link, do jeito que já funcionava antes.
+      const whatsappText = `${store.checkout?.messageIntro || 'Olá! Quero finalizar meu pedido:'}
 
 *Itens:*
 ${message}
@@ -137,7 +165,11 @@ ${message}
 
 Pode me ajudar com o pagamento e entrega?`
 
-  const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappText)}`
+      window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappText)}`
+    }
+
+    setFinalizando(false)
+  }
 
   return (
     <>
@@ -236,8 +268,8 @@ Pode me ajudar com o pagamento e entrega?`
                 </div>
               )}
 
-              <button type="button" onClick={() => window.location.href = whatsappLink} className="whatsapp-button">
-                Finalizar no WhatsApp
+              <button type="button" onClick={handleFinalizarPedido} className="whatsapp-button" disabled={finalizando}>
+                {finalizando ? 'Preparando pedido...' : 'Finalizar no WhatsApp'}
               </button>
               <button onClick={clearCart} className="clear-cart">Limpar carrinho</button>
             </>

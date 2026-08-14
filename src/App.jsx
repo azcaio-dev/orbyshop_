@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import ProductDetails from './pages/ProductDetails'
+import OrderSummary from './pages/OrderSummary'
 import AdminLogin from './pages/AdminLogin'
 import AdminProducts from './pages/AdminProducts'
 import AdminBulkImport from './pages/AdminBulkImport'
@@ -42,6 +43,9 @@ function App() {
 
         <Route path="/produto/:id" element={<ProductDetails />} />
         <Route path="/:storeSlug/produto/:id" element={<ProductDetails />} />
+
+        <Route path="/pedido/:orderId" element={<OrderSummary />} />
+        <Route path="/:storeSlug/pedido/:orderId" element={<OrderSummary />} />
 
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLogin />} />
