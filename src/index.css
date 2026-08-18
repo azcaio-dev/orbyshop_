@@ -5537,32 +5537,6 @@ button:hover {
   overflow: hidden; /* impede que a margem do <p> "vaze" pra fora da seção, e contém o círculo decorativo */
 }
 
-.sobre-section::before {
-  content: '';
-  position: absolute;
-  top: -70px;
-  right: -70px;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--sobre-primary, #c5a19c) 0%, transparent 70%);
-  opacity: 0.16;
-  pointer-events: none;
-}
-
-.sobre-section::after {
-  content: '';
-  position: absolute;
-  bottom: -90px;
-  left: -90px;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--sobre-primary, #c5a19c) 0%, transparent 70%);
-  opacity: 0.1;
-  pointer-events: none;
-}
-
 .sobre-content {
   position: relative;
   z-index: 1;
@@ -6678,4 +6652,326 @@ button:hover {
     width: 60px;
     height: 60px;
   }
+}
+
+/* ===== Carrossel de avaliações (Home) ===== */
+
+.reviews-section {
+  background: var(--reviews-bg, #f8f1ec);
+  padding: 56px 20px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reviews-eyebrow {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--reviews-primary, #c5a19c);
+  margin-bottom: 8px;
+}
+
+.reviews-title {
+  font-size: 26px;
+  margin: 0 0 12px;
+}
+
+.reviews-divider {
+  width: 48px;
+  height: 2px;
+  background: var(--reviews-primary, #c5a19c);
+  margin: 0 auto 32px;
+}
+
+.reviews-carousel {
+  position: relative;
+  width: min(640px, 100%);
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.reviews-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 180px;
+  overflow: hidden;
+}
+
+.reviews-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.reviews-card.active {
+  opacity: 1;
+}
+
+.reviews-stars {
+  color: var(--reviews-primary, #c5a19c);
+  font-size: 20px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.reviews-comment {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+  max-width: 480px;
+  font-style: italic;
+}
+
+.reviews-author {
+  margin-top: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #555;
+}
+
+.reviews-arrow {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: var(--reviews-primary, #c5a19c);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.reviews-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.reviews-dots button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: #ddd;
+  cursor: pointer;
+  padding: 0;
+}
+
+.reviews-dots button.active {
+  background: var(--reviews-primary, #c5a19c);
+}
+
+/* ===== Página pública de avaliação ===== */
+
+.avaliar-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f1ec;
+  padding: 24px;
+}
+
+.avaliar-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.avaliar-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin: 0 auto 16px;
+}
+
+.avaliar-card h1 {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.avaliar-subtitle {
+  color: #777;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.avaliar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.avaliar-form label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.avaliar-form input[type='text'],
+.avaliar-form textarea {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.avaliar-stars {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin: 4px 0 8px;
+}
+
+.avaliar-star {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  line-height: 1;
+  padding: 2px;
+}
+
+.avaliar-star.active {
+  color: #f2b632;
+}
+
+.avaliar-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.avaliar-erro {
+  color: #d9534f;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.avaliar-form button[type='submit'] {
+  margin-top: 20px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #c5a19c;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.avaliar-form button[type='submit']:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.avaliar-sucesso h1 {
+  font-size: 22px;
+}
+
+.avaliar-invalido h1 {
+  font-size: 20px;
+}
+
+/* ============================================================
+   AJUSTES DE DESKTOP
+   Cole este bloco no FINAL do index.css.
+   Não altera nada do mobile — só passa a valer a partir de 1024px.
+   ============================================================ */
+
+@media (min-width: 1024px) {
+
+  /* A Home inteira parava de crescer aos 480px. Libera mais espaço
+     em telas grandes sem esticar até a borda. */
+  .container {
+    max-width: 1100px;
+  }
+
+  /* O banner ficava fixo em 200px de altura, então em telas largas
+     virava uma faixa esticada e cortada de forma estranha. */
+  .banner-carousel {
+    height: 440px;
+  }
+
+  /* Grid de resultados filtrados (quando clica em "ver mais") —
+     2 colunas no mobile, 4 no desktop. */
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+
+  /* Cards dos carrosséis horizontais (Mais vendidos, Lançamentos,
+     Outlet) ficam maiores em telas largas. */
+  .launch-card {
+    flex: 0 0 220px;
+  }
+
+  /* Selo de confiança (Compra segura, Whatsapp etc.) acompanha a
+     largura maior do container. */
+  .trust-grid {
+    max-width: 900px;
+  }
+}
+
+.products-page {
+  padding-top: var(--header-height);
+}
+ 
+/* ============================================================
+   Botões do "Link de avaliação" no admin (AdminReviews).
+   Cole no final do index.css.
+   ============================================================ */
+
+.review-link-box input[type='text'] {
+  margin-bottom: 4px;
+}
+
+.review-link-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.review-link-actions button,
+.review-link-box > button {
+  flex: 1;
+  min-width: 140px;
+  border: none;
+  padding: 13px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  font-family: inherit;
+  background: linear-gradient(135deg, #5b2cff, #7c3cff);
+  color: #ffffff;
+}
+
+.review-link-actions button.secondary {
+  background: #ede9fe;
+  color: #5b2cff;
 }

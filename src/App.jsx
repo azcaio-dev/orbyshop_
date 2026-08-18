@@ -20,6 +20,8 @@ import OrbyEditStore from './pages/OrbyEditStore'
 import Landing from './pages/Landing'
 import ScrollToTop from './components/ScrollToTop'
 import { getStoreSlugFromDomain } from './config/customDomains'
+import AvaliarLoja from './pages/AvaliarLoja.jsx'
+import AdminReviews from './pages/AdminReviews'
 
 function App() {
   // Se o domínio atual estiver mapeado (ex: calcarbem.app.br), a raiz "/"
@@ -40,6 +42,9 @@ function App() {
 
         <Route path="/produtos" element={<Products />} />
         <Route path="/:storeSlug/produtos" element={<Products />} />
+
+        <Route path="/:storeSlug/avaliar/:reviewToken" element={<AvaliarLoja />} />
+        <Route path="/admin/:storeSlug/avaliacoes" element={<AdminReviews />} />
 
         <Route path="/produto/:id" element={<ProductDetails />} />
         <Route path="/:storeSlug/produto/:id" element={<ProductDetails />} />

@@ -27,6 +27,14 @@ const sectionLabels = {
   outlet: 'Outlet',
 }
 
+// ✅ No desktop a grade é de 4 colunas, então carrega de 12 em 12
+// (múltiplo de 4, sem deixar linha incompleta). No mobile é 2 colunas,
+// carrega de 10 em 10.
+function getPageSize() {
+  if (typeof window === 'undefined') return 10
+  return window.innerWidth >= 1024 ? 12 : 10
+}
+
 // ✅ Verifica se um produto tem pelo menos um tamanho com estoque > 0
 function hasAnyStock(product) {
   if (!product.available) return false
@@ -78,7 +86,7 @@ function Products() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [selectedSize, setSelectedSize] = useState('')
   const [filterLabel, setFilterLabel] = useState('')
-  const [visibleCount, setVisibleCount] = useState(10)
+  const [visibleCount, setVisibleCount] = useState(getPageSize)
   const [openSearch, setOpenSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSizeFilter, setSelectedSizeFilter] = useState(null)
@@ -129,7 +137,7 @@ function Products() {
           setActiveFilter(null)
           setFilterLabel('')
         }
-        setVisibleCount(10)
+        setVisibleCount(getPageSize())
       } catch (error) {
         console.error('Erro ao carregar produtos:', error)
       } finally {
@@ -186,7 +194,7 @@ function Products() {
         products={products} setFilteredProducts={setFilteredProducts}
         setActiveFilter={setActiveFilter} setFilterLabel={setFilterLabel} />
 
-      <main className="container fade-in">
+      <main className="container products-page fade-in">
         <h2 className="section-title">{activeFilter ? filterLabel : 'Todos os produtos'}</h2>
 
         <button className="filter-toggle-button" onClick={() => setOpenFilters(!openFilters)}
@@ -367,7 +375,7 @@ function Products() {
           : filteredProducts).length && (
           <div className="load-more">
             <button onClick={() => {
-              setVisibleCount((prev) => prev + 10)
+              setVisibleCount((prev) => prev + getPageSize())
               setTimeout(() => window.scrollBy({ top: 300, behavior: 'smooth' }), 100)
             }}>Ver mais</button>
           </div>
@@ -381,9 +389,9 @@ function Products() {
         <nav className="menu-list">
           <button className="menu-link" onClick={() => { navigate(storePrefix); setOpenMenu(false) }}>Home</button>
           <button className="menu-link" onClick={() => { setOpenMenu(false); setTimeout(() => navigate(`${storePrefix}/produtos`), 150) }}>Todos os produtos</button>
-          <button className="menu-link" onClick={() => { setVisibleCount(10); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'launch'))); setActiveFilter('launch'); setFilterLabel('Lançamentos'); setOpenMenu(false) }}>Lançamentos</button>
-          <button className="menu-link" onClick={() => { setVisibleCount(10); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'bestseller'))); setActiveFilter('bestseller'); setFilterLabel('Mais vendidos'); setOpenMenu(false) }}>Mais vendidos</button>
-          <button className="menu-link" onClick={() => { setVisibleCount(10); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'outlet'))); setActiveFilter('outlet'); setFilterLabel('Outlet'); setOpenMenu(false) }}>Outlet</button>
+          <button className="menu-link" onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'launch'))); setActiveFilter('launch'); setFilterLabel('Lançamentos'); setOpenMenu(false) }}>Lançamentos</button>
+          <button className="menu-link" onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'bestseller'))); setActiveFilter('bestseller'); setFilterLabel('Mais vendidos'); setOpenMenu(false) }}>Mais vendidos</button>
+          <button className="menu-link" onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'outlet'))); setActiveFilter('outlet'); setFilterLabel('Outlet'); setOpenMenu(false) }}>Outlet</button>
 
           {store.menu?.showBrands && (
             <>
@@ -393,7 +401,7 @@ function Products() {
               {openBrands && (
                 <div className="submenu">
                   {brands.map((brand) => (
-                    <button key={brand} onClick={() => { setVisibleCount(10); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.brand === brand))); setActiveFilter('brand'); setFilterLabel(`${store.menu?.brandsLabel || 'Marcas'} > ${brand}`); setOpenMenu(false) }}>{brand}</button>
+                    <button key={brand} onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.brand === brand))); setActiveFilter('brand'); setFilterLabel(`${store.menu?.brandsLabel || 'Marcas'} > ${brand}`); setOpenMenu(false) }}>{brand}</button>
                   ))}
                 </div>
               )}
@@ -408,7 +416,7 @@ function Products() {
               {openCategories && (
                 <div className="submenu">
                   {categories.map((cat) => (
-                    <button key={cat} onClick={() => { setVisibleCount(10); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.category === cat))); setActiveFilter('category'); setFilterLabel(`${store.menu?.categoriesLabel || 'Peças'} > ${cat}`); setOpenMenu(false) }}>{cat}</button>
+                    <button key={cat} onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.category === cat))); setActiveFilter('category'); setFilterLabel(`${store.menu?.categoriesLabel || 'Peças'} > ${cat}`); setOpenMenu(false) }}>{cat}</button>
                   ))}
                 </div>
               )}

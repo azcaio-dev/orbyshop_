@@ -15,6 +15,7 @@ import AdminLayout from '../layouts/AdminLayout'
 function AdminBanners() {
   const [banners, setBanners] = useState([])
   const [file, setFile] = useState(null)
+  const [fileDesktop, setFileDesktop] = useState(null)
   const [redirectValue, setRedirectValue] = useState('')
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState({ message: '', type: 'success' })
@@ -48,11 +49,18 @@ function AdminBanners() {
     setLoading(true)
     try {
       const image = await uploadImage(file)
+
+      // Imagem de desktop é opcional. Se não for enviada, o site
+      // usa a mesma imagem do mobile nas telas grandes.
+      const imageDesktop = fileDesktop ? await uploadImage(fileDesktop) : null
+
       await addDoc(collection(db, 'stores', storeSlug, 'banners'), {
-        image, active: true,
+        image,
+        imageDesktop,
+        active: true,
         redirectType: redirectValue ? 'section' : 'none', redirectValue,
       })
-      setFile(null); setRedirectValue(''); e.target.reset(); loadBanners()
+      setFile(null); setFileDesktop(null); setRedirectValue(''); e.target.reset(); loadBanners()
       showToast('Banner cadastrado com sucesso!', 'success')
     } catch (error) { showToast('Erro ao cadastrar banner', 'error') }
     setLoading(false)
@@ -86,8 +94,18 @@ function AdminBanners() {
 
         <div className="orby-admin-layout">
           <form onSubmit={handleSubmit} className="orby-admin-form">
-            <label>Imagem do banner</label>
+            <label>Imagem do banner (usada no celular e, se não enviar a de desktop, também no computador)</label>
             <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} required />
+            <small style={{ opacity: 0.7, marginTop: '-8px', marginBottom: '4px' }}>
+              Proporção recomendada: larga e baixa, tipo 900x450px
+            </small>
+
+            <label>Imagem para desktop (opcional)</label>
+            <input type="file" accept="image/*" onChange={(e) => setFileDesktop(e.target.files[0])} />
+            <small style={{ opacity: 0.7, marginTop: '-8px', marginBottom: '4px' }}>
+              Só envie se quiser um recorte diferente em telas grandes. Proporção recomendada: bem larga, tipo 1920x440px
+            </small>
+
             <label>Redirecionar para</label>
             <select value={redirectValue} onChange={(e) => setRedirectValue(e.target.value)}>
               <option value="">Nenhum redirecionamento</option>
@@ -110,6 +128,7 @@ function AdminBanners() {
                 <div className="orby-banner-info">
                   <strong>{banner.active ? 'Ativo' : 'Inativo'}</strong>
                   <span>{getRedirectLabel(banner)}</span>
+                  <span>{banner.imageDesktop ? 'Com imagem de desktop própria' : 'Usando a mesma imagem no desktop'}</span>
                   <div className="admin-actions">
                     <button onClick={() => toggleActive(banner)}>{banner.active ? 'Desativar' : 'Ativar'}</button>
                     <button onClick={() => handleDelete(banner.id)}>Excluir</button>

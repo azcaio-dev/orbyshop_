@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 import SobreNos from '../components/SobreNos'
+import ReviewsCarousel from '../components/ReviewsCarousel'
 
 // ✅ Formata a forma de pagamento pra exibição
 function formatPaymentMethod(paymentMethod) {
@@ -284,11 +285,19 @@ const storePrefix = `/${storeSlug}`
                     cursor: banner.redirectValue ? 'pointer' : 'default',
                   }}
                 >
-                  <img
-                    src={banner.image}
-                    alt={`Banner ${store.name}`}
-                    className="banner-image"
-                  />
+                  <picture>
+                    {banner.imageDesktop && (
+                      <source
+                        media="(min-width: 1024px)"
+                        srcSet={banner.imageDesktop}
+                      />
+                    )}
+                    <img
+                      src={banner.image}
+                      alt={`Banner ${store.name}`}
+                      className="banner-image"
+                    />
+                  </picture>
                 </div>
               ))}
             </div>
@@ -707,6 +716,9 @@ const storePrefix = `/${storeSlug}`
       </main>
 
       {!activeFilter && !loading && <SobreNos store={store} />}
+      {!activeFilter && !loading && (
+        <ReviewsCarousel store={store} storeSlug={storeSlug} />
+      )}
 
       <CartDrawer open={openCart} onClose={() => setOpenCart(false)} />
 

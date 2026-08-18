@@ -13,15 +13,16 @@ function AdminSidebar({ open, onClose, store }) {
   }
 
   const links = [
-    { label: 'Dashboard',     path: `/admin/${storeSlug}/dashboard`,     icon: 'ti-layout-dashboard' },
-    { label: 'Produtos',      path: `/admin/${storeSlug}/produtos`,      icon: 'ti-package' },
-    { label: 'Mídia',         path: `/admin/${storeSlug}/banners`,       icon: 'ti-photo' },
-    { label: 'Configurações', path: `/admin/${storeSlug}/configuracoes`, icon: 'ti-settings' },
-    { label: 'Vendas',        path: `/admin/${storeSlug}/vendas`,        icon: 'ti-shopping-cart', pro: true },
-    { label: 'Estoque',       path: `/admin/${storeSlug}/estoque`,       icon: 'ti-box',           pro: true },
-    { label: 'Financeiro',    path: `/admin/${storeSlug}/financeiro`,    icon: 'ti-credit-card',   pro: true },
-    { label: 'Vendedores',    path: `/admin/${storeSlug}/vendedores`,    icon: 'ti-users',         pro: true },
-  ]
+  { label: 'Dashboard',     path: `/admin/${storeSlug}/dashboard`,     icon: 'ti-layout-dashboard' },
+  { label: 'Produtos',      path: `/admin/${storeSlug}/produtos`,      icon: 'ti-package' },
+  { label: 'Mídia',         path: `/admin/${storeSlug}/banners`,       icon: 'ti-photo' },
+  { label: 'Avaliações',    path: `/admin/${storeSlug}/avaliacoes`,    icon: 'ti-star' },
+  { label: 'Configurações', path: `/admin/${storeSlug}/configuracoes`, icon: 'ti-settings' },
+  { label: 'Vendas',        path: `/admin/${storeSlug}/vendas`,        icon: 'ti-shopping-cart', pro: true },
+  { label: 'Estoque',       path: `/admin/${storeSlug}/estoque`,       icon: 'ti-box',           pro: true },
+  { label: 'Financeiro',    path: `/admin/${storeSlug}/financeiro`,    icon: 'ti-credit-card',   pro: true },
+  { label: 'Vendedores',    path: `/admin/${storeSlug}/vendedores`,    icon: 'ti-users',         pro: true },
+]
 
   return (
     <aside className={`admin-sidebar ${open ? 'open' : ''}`}>
