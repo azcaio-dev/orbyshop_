@@ -3,12 +3,18 @@ import { useParams } from 'react-router-dom'
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import useStoreTheme from '../hooks/useStoreTheme'
+import { getStoreSlugFromDomain } from '../config/customDomains'
 
 // ✅ Página pública de avaliação.
 // Só funciona se o token da URL bater com o reviewToken salvo na loja.
 // Isso impede que qualquer pessoa avalie sem ter recebido o link do admin.
+//
+// Funciona em dois formatos de link:
+//   - /:storeSlug/avaliar/:reviewToken   (domínio padrão da Orby)
+//   - /avaliar/:reviewToken              (domínio próprio da loja, ex: calcarbem.app.br)
 function AvaliarLoja() {
-  const { storeSlug, reviewToken } = useParams()
+  const { storeSlug: storeSlugFromUrl, reviewToken } = useParams()
+  const storeSlug = storeSlugFromUrl || getStoreSlugFromDomain()
 
   const [store, setStore] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -27,6 +33,11 @@ function AvaliarLoja() {
 
   useEffect(() => {
     async function loadStore() {
+      if (!storeSlug) {
+        setLoading(false)
+        return
+      }
+
       try {
         const snap = await getDoc(doc(db, 'stores', storeSlug))
 

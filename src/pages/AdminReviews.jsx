@@ -13,6 +13,7 @@ import { db } from '../services/firebase'
 import Toast from '../components/Toast'
 import { useParams } from 'react-router-dom'
 import AdminLayout from '../layouts/AdminLayout'
+import { getCustomDomainFromSlug } from '../config/customDomains'
 
 // Gera um token curto e aleatório para compor o link de avaliação
 function gerarToken() {
@@ -62,8 +63,12 @@ function AdminReviews() {
     loadReviews()
   }, [storeSlug])
 
+  const customDomain = getCustomDomainFromSlug(storeSlug)
+
   const reviewLink = reviewToken
-    ? `${window.location.origin}/${storeSlug}/avaliar/${reviewToken}`
+    ? customDomain
+      ? `https://${customDomain}/avaliar/${reviewToken}`
+      : `${window.location.origin}/${storeSlug}/avaliar/${reviewToken}`
     : ''
 
   async function handleCopyLink() {

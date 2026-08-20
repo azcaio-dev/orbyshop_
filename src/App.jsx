@@ -45,6 +45,8 @@ function App() {
 
         <Route path="/:storeSlug/avaliar/:reviewToken" element={<AvaliarLoja />} />
         <Route path="/admin/:storeSlug/avaliacoes" element={<AdminReviews />} />
+        <Route path="/avaliar/:reviewToken" element={<AvaliarLoja />} />
+        <Route path="/:storeSlug/avaliar/:reviewToken" element={<AvaliarLoja />} /> 
 
         <Route path="/produto/:id" element={<ProductDetails />} />
         <Route path="/:storeSlug/produto/:id" element={<ProductDetails />} />
