@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import ProductDetails from './pages/ProductDetails'
@@ -22,11 +23,14 @@ import ScrollToTop from './components/ScrollToTop'
 import { getStoreSlugFromDomain } from './config/customDomains'
 import AvaliarLoja from './pages/AvaliarLoja.jsx'
 import AdminReviews from './pages/AdminReviews'
+import { initScrollReveal } from './utils/scrollReveal'
 
 function App() {
-  // Se o domínio atual estiver mapeado (ex: calcarbem.app.br), a raiz "/"
-  // deve abrir direto a loja correspondente, em vez da Landing da Orby.
   const customDomainSlug = getStoreSlugFromDomain()
+
+  useEffect(() => {
+    initScrollReveal()
+  }, [])
 
   return (
     <BrowserRouter>
@@ -43,10 +47,9 @@ function App() {
         <Route path="/produtos" element={<Products />} />
         <Route path="/:storeSlug/produtos" element={<Products />} />
 
+        <Route path="/avaliar/:reviewToken" element={<AvaliarLoja />} />
         <Route path="/:storeSlug/avaliar/:reviewToken" element={<AvaliarLoja />} />
         <Route path="/admin/:storeSlug/avaliacoes" element={<AdminReviews />} />
-        <Route path="/avaliar/:reviewToken" element={<AvaliarLoja />} />
-        <Route path="/:storeSlug/avaliar/:reviewToken" element={<AvaliarLoja />} /> 
 
         <Route path="/produto/:id" element={<ProductDetails />} />
         <Route path="/:storeSlug/produto/:id" element={<ProductDetails />} />

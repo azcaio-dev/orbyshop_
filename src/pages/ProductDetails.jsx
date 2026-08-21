@@ -8,6 +8,7 @@ import cartIcon from '../assets/cart.png'
 import Toast from '../components/Toast'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
+import LoadingScreen from '../components/LoadingScreen'
 
 function getSizesWithStock(product, variation) {
   const sizes = variation?.sizes || product.sizes || []
@@ -72,6 +73,20 @@ function ProductDetails() {
 
   const cartQuantity = cart.reduce((acc, item) => acc + item.quantity, 0)
 
+  // ✅ Salva logo/cores em cache leve pra próxima tela de carregamento
+  // já nascer com a identidade certa, sem precisar esperar o Firestore.
+  useEffect(() => {
+    if (!store || !storeSlug) return
+    try {
+      sessionStorage.setItem(
+        `orby-store-cache:${storeSlug}`,
+        JSON.stringify({ logo: store.logo, name: store.name, colors: store.colors })
+      )
+    } catch {
+      // sessionStorage indisponível (modo privado, etc.) — sem problema, só não cacheia
+    }
+  }, [store, storeSlug])
+
   function showToast(message, type = 'success') {
     setToast({ message, type })
     setTimeout(() => setToast({ message: '', type: 'success' }), 2500)
@@ -116,7 +131,7 @@ function ProductDetails() {
     loadProduct()
   }, [storeSlug, id])
 
-  if (storeLoading || !store) return null
+  if (storeLoading || !store) return <LoadingScreen store={store} storeSlug={storeSlug} />
 
   if (store.active === false) {
     return (
@@ -133,7 +148,7 @@ function ProductDetails() {
     )
   }
 
-  if (loading) return <main className="container product-loading"><p>Carregando produto...</p></main>
+  if (loading) return <LoadingScreen store={store} storeSlug={storeSlug} />
   if (!product) return <main className="container product-empty"><h2>Produto não encontrado</h2></main>
 
   const productImages = product.images?.length > 0

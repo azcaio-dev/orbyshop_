@@ -1293,8 +1293,31 @@ body {
     background-position: -200% 0;
   }
 }
+
+/* ============================================================
+   SCROLL REVEAL — substitui a regra .fade-in antiga no index.css
+   (a que tem "animation: fadeInUp 0.4s ease forwards;").
+   Apague a regra antiga e cole esta no lugar.
+   ============================================================ */
+
 .fade-in {
-  animation: fadeInUp 0.4s ease forwards;
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-in.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Gente com sensibilidade a movimento vê o conteúdo direto, sem animação */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes fadeInUp {
@@ -6915,7 +6938,7 @@ button:hover {
   /* O banner ficava fixo em 200px de altura, então em telas largas
      virava uma faixa esticada e cortada de forma estranha. */
   .banner-carousel {
-    height: 440px;
+    height: 480px;
   }
 
   /* Grid de resultados filtrados (quando clica em "ver mais") —
@@ -6975,3 +6998,197 @@ button:hover {
   background: #ede9fe;
   color: #5b2cff;
 }
+
+/* ============================================================
+   Tela de carregamento personalizada (LoadingScreen).
+   Cole no final do index.css.
+   ============================================================ */
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+/* Moldura redonda parada no centro, com a logo da loja dentro */
+.loading-frame {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-frame img {
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+}
+
+/* Anel girando ao redor da moldura */
+.loading-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 0, 0, 0.08);
+  border-top-color: var(--loading-primary, var(--color-primary, #111111));
+  animation: loading-spin 0.9s linear infinite;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-ring {
+    animation-duration: 2.4s;
+  }
+}
+
+/* ============================================================
+   AJUSTES DE DESKTOP — Página de detalhes do produto
+   Cole no final do index.css (junto com o bloco desktop-fixes.css
+   que você já colou antes).
+   ============================================================ */
+
+@media (min-width: 1024px) {
+
+  /* Travava em 480px. Agora libera espaço e vira 2 colunas:
+     galeria à esquerda, informações à direita. */
+  .product-details {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-top: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  /* Sem essa margem, já que agora fica ao lado da galeria,
+     não embaixo dela. */
+  .product-content {
+    margin-top: 0;
+  }
+
+  /* Trava a galeria numa altura confortável mesmo com a coluna
+     mais larga, sem esticar a imagem demais. */
+  .main-product-image {
+    max-height: 640px;
+  }
+}
+
+/* ============================================================
+   Trust badges menores no mobile (ícones, texto e espaçamento
+   reduzidos). Não afeta o desktop. Cole no final do index.css.
+   ============================================================ */
+
+@media (max-width: 767px) {
+  .trust-grid {
+    gap: 4px;
+  }
+
+  .trust-item {
+    padding: 6px 2px;
+    gap: 6px;
+  }
+
+  .trust-icon img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .trust-label {
+    font-size: 10.5px;
+  }
+
+  .trust-desc {
+    font-size: 9px;
+  }
+}
+
+/* ============================================================
+   Setas laterais do banner (finas e discretas) + suporte a swipe.
+   Cole no final do index.css.
+   ============================================================ */
+
+.banner-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.banner-arrow:hover,
+.banner-arrow:active {
+  opacity: 1;
+}
+
+/* Seta desenhada em CSS (não usa caractere de texto), pra garantir
+   que os dois lados fiquem com a mesma forma e a mesma altura. */
+.banner-arrow::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-style: solid;
+  border-color: #ffffff;
+  border-width: 2px 2px 0 0;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
+}
+
+.banner-arrow-left {
+  left: 2px;
+}
+
+.banner-arrow-left::before {
+  transform: rotate(-135deg);
+  margin-left: 4px;
+}
+
+.banner-arrow-right {
+  right: 2px;
+}
+
+.banner-arrow-right::before {
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+
+ 
+.section-title,
+.launch-section h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--color-text);
+  opacity: 0.85;
+  margin: 20px 0 14px;
+}
+ 

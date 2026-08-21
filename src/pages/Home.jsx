@@ -1,5 +1,5 @@
 import { useCart } from '../context/CartContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import CartDrawer from '../components/CartDrawer'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../services/firebase'
@@ -13,6 +13,7 @@ import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 import SobreNos from '../components/SobreNos'
 import ReviewsCarousel from '../components/ReviewsCarousel'
+import LoadingScreen from '../components/LoadingScreen'
 
 // ✅ Formata a forma de pagamento pra exibição
 function formatPaymentMethod(paymentMethod) {
@@ -47,6 +48,46 @@ const storePrefix = `/${storeSlug}`
   const [selectedSize, setSelectedSize] = useState('')
 
   const cartQuantity = cart.reduce((acc, item) => acc + item.quantity, 0)
+
+  // ✅ Navegação do banner: setas laterais e swipe (arrastar o dedo),
+  // igual carrossel do Instagram.
+  const touchStartX = useRef(0)
+
+  function goToPrevBanner() {
+    setCurrentBanner((prev) => (prev === 0 ? banners.length - 1 : prev - 1))
+  }
+
+  function goToNextBanner() {
+    setCurrentBanner((prev) => (prev === banners.length - 1 ? 0 : prev + 1))
+  }
+
+  function handleBannerTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleBannerTouchEnd(e) {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current
+    const SWIPE_THRESHOLD = 40
+
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD) return
+
+    if (deltaX < 0) goToNextBanner()
+    else goToPrevBanner()
+  }
+
+  // ✅ Salva logo/cores em cache leve pra próxima tela de carregamento
+  // já nascer com a identidade certa, sem precisar esperar o Firestore.
+  useEffect(() => {
+    if (!store || !storeSlug) return
+    try {
+      sessionStorage.setItem(
+        `orby-store-cache:${storeSlug}`,
+        JSON.stringify({ logo: store.logo, name: store.name, colors: store.colors })
+      )
+    } catch {
+      // sessionStorage indisponível (modo privado, etc.) — sem problema, só não cacheia
+    }
+  }, [store, storeSlug])
 
   useEffect(() => {
     function handleScroll() {
@@ -166,7 +207,7 @@ const storePrefix = `/${storeSlug}`
   }
 
   if (storeLoading || !store) {
-    return null
+    return <LoadingScreen store={store} storeSlug={storeSlug} />
   }
 
   if (store.active === false) {
@@ -264,7 +305,11 @@ const storePrefix = `/${storeSlug}`
       <div className="page-content">
       {!activeFilter && banners.length > 0 && (
           <section className="banner-carousel fade-in">
-            <div className="banner-track">
+            <div
+              className="banner-track"
+              onTouchStart={handleBannerTouchStart}
+              onTouchEnd={handleBannerTouchEnd}
+            >
               {banners.map((banner, index) => (
                 <div
                   className={`banner-slide ${index === currentBanner ? 'active' : ''}`}
@@ -303,6 +348,25 @@ const storePrefix = `/${storeSlug}`
             </div>
 
             {banners.length > 1 && (
+              <>
+                <button
+                  className="banner-arrow banner-arrow-left"
+                  onClick={goToPrevBanner}
+                  aria-label="Banner anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  className="banner-arrow banner-arrow-right"
+                  onClick={goToNextBanner}
+                  aria-label="Próximo banner"
+                >
+                  ›
+                </button>
+              </>
+            )}
+
+            {banners.length > 1 && (
               <div className="banner-dots">
                 {banners.map((banner, index) => (
                   <button
@@ -316,7 +380,45 @@ const storePrefix = `/${storeSlug}`
           </section>
         )}
       </div>
-      
+
+      {!activeFilter && (
+        <section className="trust-section fade-in">
+          <div className="trust-grid">
+            <div className="trust-item">
+              <div className="trust-icon">
+                <img src="/escudo.png" alt="" />
+              </div>
+              <p className="trust-label">Compra segura</p>
+              <p className="trust-desc">Seus dados protegidos</p>
+            </div>
+
+            <div className="trust-item">
+              <div className="trust-icon">
+                <img src="/whatsapp.png" alt="" />
+              </div>
+              <p className="trust-label">Compre pelo Whatsapp</p>
+              <p className="trust-desc">Você pode comprar pelo Whatsapp</p>
+            </div>
+
+            <div className="trust-item">
+              <div className="trust-icon">
+                <img src="/entrega-rapida.png" alt="" />
+              </div>
+              <p className="trust-label">Entrega rápida</p>
+              <p className="trust-desc">Entregamos em todo o Brasil</p>
+            </div>
+
+            <div className="trust-item">
+              <div className="trust-icon">
+                <img src="/forma-de-pagamento.png" alt="" />
+              </div>
+              <p className="trust-label">Pagamento facilitado</p>
+              <p className="trust-desc">Pix e cartão disponível</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       <main className="container">
         <div className={openSearch ? 'search-open' : ''}></div>
 
@@ -613,42 +715,6 @@ const storePrefix = `/${storeSlug}`
               >
                 Ver todos os produtos
               </button>
-
-              <section className="trust-section">
-                <div className="trust-grid">
-                  <div className="trust-item">
-                    <div className="trust-icon">
-                      <img src="/escudo.png" alt="" />
-                    </div>
-                    <p className="trust-label">Compra segura</p>
-                    <p className="trust-desc">Seus dados protegidos</p>
-                  </div>
-
-                  <div className="trust-item">
-                    <div className="trust-icon">
-                      <img src="/whatsapp.png" alt="" />
-                    </div>
-                    <p className="trust-label">Compre pelo Whatsapp</p>
-                    <p className="trust-desc">Você pode comprar pelo Whatsapp</p>
-                  </div>
-
-                  <div className="trust-item">
-                    <div className="trust-icon">
-                      <img src="/entrega-rapida.png" alt="" />
-                    </div>
-                    <p className="trust-label">Entrega rápida</p>
-                    <p className="trust-desc">Entregamos em todo o Brasil</p>
-                  </div>
-
-                  <div className="trust-item">
-                    <div className="trust-icon">
-                      <img src="/forma-de-pagamento.png" alt="" />
-                    </div>
-                      <p className="trust-label">Pagamento facilitado</p>
-                      <p className="trust-desc">Pix e cartão disponível</p>
-                  </div>
-                </div>
-              </section>
             </div>
           )
         )}

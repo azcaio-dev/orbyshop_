@@ -11,6 +11,7 @@ import lupaIcon from '../assets/lupa.png'
 import SearchPanel from '../components/SearchPanel'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
+import LoadingScreen from '../components/LoadingScreen'
 
 function sortProductsByCategory(products) {
   return [...products].sort((a, b) => {
@@ -94,6 +95,20 @@ function Products() {
 
   const cartQuantity = cart.reduce((acc, item) => acc + item.quantity, 0)
 
+  // ✅ Salva logo/cores em cache leve pra próxima tela de carregamento
+  // já nascer com a identidade certa, sem precisar esperar o Firestore.
+  useEffect(() => {
+    if (!store || !storeSlug) return
+    try {
+      sessionStorage.setItem(
+        `orby-store-cache:${storeSlug}`,
+        JSON.stringify({ logo: store.logo, name: store.name, colors: store.colors })
+      )
+    } catch {
+      // sessionStorage indisponível (modo privado, etc.) — sem problema, só não cacheia
+    }
+  }, [store, storeSlug])
+
   useEffect(() => {
     function handleScroll() { setScrolled(window.scrollY > 20) }
     window.addEventListener('scroll', handleScroll)
@@ -150,7 +165,7 @@ function Products() {
   const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))]
   const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
 
-  if (storeLoading || !store) return null
+  if (storeLoading || !store) return <LoadingScreen store={store} storeSlug={storeSlug} />
 
   const allSizes = [...new Set(products.flatMap((p) => p.sizes || []))].sort()
 
