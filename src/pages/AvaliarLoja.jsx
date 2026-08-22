@@ -5,6 +5,8 @@ import { db } from '../services/firebase'
 import useStoreTheme from '../hooks/useStoreTheme'
 import { getStoreSlugFromDomain } from '../config/customDomains'
 
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024 // 5MB
+
 // ✅ Página pública de avaliação.
 // Só funciona se o token da URL bater com o reviewToken salvo na loja.
 // Isso impede que qualquer pessoa avalie sem ter recebido o link do admin.
@@ -28,6 +30,9 @@ function AvaliarLoja() {
   const [sending, setSending] = useState(false)
   const [enviado, setEnviado] = useState(false)
   const [erro, setErro] = useState('')
+
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState('')
 
   useStoreTheme(store)
 
@@ -59,6 +64,60 @@ function AvaliarLoja() {
     loadStore()
   }, [storeSlug, reviewToken])
 
+  // Libera a URL do preview quando o componente desmonta ou a foto muda,
+  // pra não vazar memória com objectURLs
+  useEffect(() => {
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview)
+    }
+  }, [photoPreview])
+
+  function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setErro('O arquivo precisa ser uma imagem.')
+      return
+    }
+
+    if (file.size > MAX_PHOTO_SIZE) {
+      setErro('A imagem precisa ter até 5MB.')
+      return
+    }
+
+    setErro('')
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  function removePhoto() {
+    setPhotoFile(null)
+    setPhotoPreview('')
+  }
+
+  // Mesmo padrão do uploadLogo: cloud name e preset do projeto Orby/Labany na Cloudinary.
+  async function uploadPhotoToCloudinary(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('upload_preset', 'loja-labany')
+
+    const response = await fetch(
+      'https://api.cloudinary.com/v1_1/dcqroxlt0/image/upload',
+      {
+        method: 'POST',
+        body: formData,
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error('Falha no upload da foto')
+    }
+
+    const data = await response.json()
+    return data.secure_url
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setErro('')
@@ -76,10 +135,24 @@ function AvaliarLoja() {
     setSending(true)
 
     try {
+      let photoURL = null
+
+      if (photoFile) {
+        try {
+          photoURL = await uploadPhotoToCloudinary(photoFile)
+        } catch (uploadError) {
+          console.error('Erro ao subir foto:', uploadError)
+          setErro('Não foi possível enviar sua foto. Tente novamente ou envie sem foto.')
+          setSending(false)
+          return
+        }
+      }
+
       await addDoc(collection(db, 'stores', storeSlug, 'reviews'), {
         customerName: customerName.trim(),
         rating,
         comment: comment.trim(),
+        photoURL,
         token: reviewToken,
         website, // honeypot: deve chegar vazio nas regras do Firestore
         visivel: true,
@@ -112,7 +185,12 @@ function AvaliarLoja() {
     <main className="avaliar-page">
       <div className="avaliar-card">
         {store.logo && (
-          <img src={store.logo} alt={store.name} className="avaliar-logo" />
+          <div
+            className="avaliar-logo-frame"
+            style={{ backgroundColor: store?.colors?.primary || '#c5a19c' }}
+          >
+            <img src={store.logo} alt={store.name} className="avaliar-logo" />
+          </div>
         )}
 
         {enviado ? (
@@ -128,6 +206,32 @@ function AvaliarLoja() {
             </p>
 
             <form onSubmit={handleSubmit} className="avaliar-form">
+              <label>Foto de perfil (opcional)</label>
+              <div className="avaliar-photo-upload">
+                {photoPreview ? (
+                  <div className="avaliar-photo-preview">
+                    <img src={photoPreview} alt="Pré-visualização" />
+                    <button
+                      type="button"
+                      className="avaliar-photo-remove"
+                      onClick={removePhoto}
+                      aria-label="Remover foto"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <label className="avaliar-photo-input">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                    />
+                    <span>Escolher foto</span>
+                  </label>
+                )}
+              </div>
+
               <label>Seu nome</label>
               <input
                 type="text"

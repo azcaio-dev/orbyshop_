@@ -6713,14 +6713,21 @@ button:hover {
 
 .reviews-carousel {
   position: relative;
-  width: min(640px, 100%);
-  max-width: 640px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  box-sizing: border-box;
+  gap: 8px;
+  width: 100%; /* ← isso força esticar até o max-width, em vez de encolher pro conteúdo */
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box; /* pra o padding não estourar o width:100% */
+}
+
+@media (min-width: 1024px) {
+  .reviews-carousel {
+    max-width: 1100px;
+    padding: 0;
+  }
 }
 
 .reviews-track {
@@ -6931,6 +6938,7 @@ button:hover {
 
   /* A Home inteira parava de crescer aos 480px. Libera mais espaço
      em telas grandes sem esticar até a borda. */
+
   .container {
     max-width: 1100px;
   }
@@ -7192,3 +7200,272 @@ button:hover {
   margin: 20px 0 14px;
 }
  
+.reviews-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.reviews-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.5s ease;
+}
+
+.reviews-slide.active {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* desktop: 3 cards */
+  gap: 1.25rem;
+  align-items: stretch; /* força os cards da mesma linha a terem a mesma altura */
+}
+
+@media (max-width: 767px) {
+  .reviews-grid {
+    grid-template-columns: repeat(2, 1fr); /* mobile: 2 cards */
+    gap: 0.75rem;
+  }
+}
+
+.reviews-grid .reviews-card {
+  position: static;
+  opacity: 1;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* conteúdo gruda no topo, não centraliza */
+  min-height: 140px;
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  text-align: left;
+}
+
+.reviews-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.reviews-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.reviews-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--reviews-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.reviews-author {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+
+.reviews-stars {
+  color: var(--reviews-primary);
+  font-size: 0.9rem;
+}
+
+/* Logo em moldura circular */
+.avaliar-logo-frame {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  padding: 12px;
+}
+
+.avaliar-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+/* Botão de upload — esconde o input nativo, mostra só o texto customizado */
+.avaliar-photo-upload {
+  margin-bottom: 1.5rem;
+}
+
+.avaliar-photo-input {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.25rem;
+  border: 1px dashed #ccc;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #666;
+  background: #fafafa;
+  transition: border-color 0.2s;
+}
+
+.avaliar-photo-input:hover {
+  border-color: #999;
+}
+
+.avaliar-photo-input input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Preview da foto escolhida — thumbnail redondo, não a imagem inteira */
+.avaliar-photo-preview {
+  position: relative;
+  width: 88px;
+  height: 88px;
+}
+
+.avaliar-photo-preview img {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avaliar-photo-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.reviews-grid .reviews-card {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.reviews-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  align-self: flex-start;
+  text-align: left;
+}
+
+.reviews-avatar,
+.reviews-avatar-fallback {
+  width: 40px;
+  height: 40px;
+}
+
+.reviews-author {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.reviews-stars {
+  text-align: left;
+}
+
+.reviews-comment {
+  text-align: left;
+  font-style: italic;
+  color: #444;
+  font-size: 0.9rem;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.reviews-comment {
+  text-align: left;
+  font-style: italic;
+  color: #444;
+  font-size: 0.9rem;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* mobile: até 4 linhas */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .reviews-comment {
+    -webkit-line-clamp: 3; /* desktop: 3 linhas */
+  }
+}
+
+.reviews-track {
+  width: 100%;
+}
+
+.reviews-slide {
+  width: 100%;
+}
+
+.reviews-grid {
+  width: 100%;
+  grid-template-columns: repeat(3, 1fr); /* colunas fixas mesmo com 1 item só */
+}
+
+@media (max-width: 767px) {
+  .reviews-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.reviews-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviews-arrow {
+  position: static; /* sai de position:absolute top/bottom, entra no flex */
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--reviews-primary);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.reviews-track {
+  flex: 1;
+  overflow: hidden;
+}
