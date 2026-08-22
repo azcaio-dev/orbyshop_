@@ -91,7 +91,8 @@ function AdminProducts() {
     return [product.name, product.brand, product.category].some((field) => (field || '').toLowerCase().includes(term))
   })
   const letterSizes = ['PP','P','M','G','GG','G1','G2','G3']
-  const numberSizes = ['28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56']
+  // Numeração estendida: inclui 15-26 (infantil/pequena) além da faixa adulta 28-56
+  const numberSizes = ['15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56']
   const ageSizes = ['3 meses','6 meses','9 meses','1 ano','2 anos','3 anos','4 anos','5 anos','6 anos','7 anos','8 anos','9 anos','10 anos','11 anos','12 anos','13 anos','14 anos']
   const sizeOptions = sizeType === 'letter' ? letterSizes : sizeType === 'number' ? numberSizes : sizeType === 'age' ? ageSizes : ['Tamanho único']
   const variationSizeOptions = variationSizeType === 'letter' ? letterSizes : variationSizeType === 'number' ? numberSizes : variationSizeType === 'age' ? ageSizes : ['Tamanho único']
