@@ -29,6 +29,13 @@ function Home() {
 const storePrefix = `/${storeSlug}`
   useStoreTheme(store)
 
+  const trustBadges = [
+    { icon: '/escudo.png', label: 'Compra segura', desc: 'Seus dados protegidos' },
+    { icon: '/whatsapp.png', label: 'Compre pelo Whatsapp', desc: 'Você pode comprar pelo Whatsapp' },
+    { icon: '/entrega-rapida.png', label: 'Entrega rápida', desc: 'Entregamos em todo o Brasil' },
+    { icon: '/forma-de-pagamento.png', label: 'Pagamento facilitado', desc: 'Pix e cartão disponível' },
+  ]
+
   const [openCart, setOpenCart] = useState(false)
   const [openMenu, setOpenMenu] = useState(false)
   const [products, setProducts] = useState([])
@@ -382,39 +389,17 @@ const storePrefix = `/${storeSlug}`
       </div>
 
       {!activeFilter && (
-        <section className="trust-section fade-in">
-          <div className="trust-grid">
-            <div className="trust-item">
-              <div className="trust-icon">
-                <img src="/escudo.png" alt="" />
+        <section className="trust-marquee fade-in">
+          <div className="trust-marquee-track">
+            {[...Array(6)].flatMap(() => trustBadges).concat([...Array(10)].flatMap(() => trustBadges)).map((badge, i) => (
+              <div className="trust-marquee-item" key={i}>
+                <img src={badge.icon} alt="" className="trust-marquee-icon" />
+                <div className="trust-marquee-text">
+                  <strong>{badge.label}</strong>
+                  <span>{badge.desc}</span>
+                </div>
               </div>
-              <p className="trust-label">Compra segura</p>
-              <p className="trust-desc">Seus dados protegidos</p>
-            </div>
-
-            <div className="trust-item">
-              <div className="trust-icon">
-                <img src="/whatsapp.png" alt="" />
-              </div>
-              <p className="trust-label">Compre pelo Whatsapp</p>
-              <p className="trust-desc">Você pode comprar pelo Whatsapp</p>
-            </div>
-
-            <div className="trust-item">
-              <div className="trust-icon">
-                <img src="/entrega-rapida.png" alt="" />
-              </div>
-              <p className="trust-label">Entrega rápida</p>
-              <p className="trust-desc">Entregamos em todo o Brasil</p>
-            </div>
-
-            <div className="trust-item">
-              <div className="trust-icon">
-                <img src="/forma-de-pagamento.png" alt="" />
-              </div>
-              <p className="trust-label">Pagamento facilitado</p>
-              <p className="trust-desc">Pix e cartão disponível</p>
-            </div>
+            ))}
           </div>
         </section>
       )}

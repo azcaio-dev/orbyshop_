@@ -3177,52 +3177,60 @@ button:hover {
 }
 
 /* Trust badges */
-.trust-section {
-  padding: 28px 16px;
+.trust-marquee {
+  width: 100%;
+  overflow: hidden;
+  padding: 12px 0;
   background: var(--color-background);
   border-top: 1px solid rgba(0, 0, 0, 0.07);
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
 }
 
-.trust-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.trust-item {
+.trust-marquee-track {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 10px;
-  padding: 8px 4px;
+  width: max-content;
+  animation: trust-marquee-scroll 130s linear infinite;
 }
 
-.trust-icon img {
-  width: 44px;
-  height: 44px;
+.trust-marquee-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 40px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trust-marquee-icon {
+  width: 20px;
+  height: 20px;
   object-fit: contain;
-  /* aplica a cor do texto da loja nos ícones PNG pretos */
+  flex-shrink: 0;
+  /* mesmo filtro que você já usa pra tingir os PNGs pretos na cor da loja */
   filter: var(--icon-color-filter, none);
 }
 
-.trust-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0;
+.trust-marquee-text {
+  display: flex;
+  flex-direction: column;
   line-height: 1.2;
 }
 
-.trust-desc {
-  font-size: 11px;
+.trust-marquee-text strong {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.trust-marquee-text span {
+  font-size: 10.5px;
   color: var(--color-text);
   opacity: 0.6;
-  margin: 0;
-  line-height: 1.3;
+}
+
+@keyframes trust-marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .discount-badge {
