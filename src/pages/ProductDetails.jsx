@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { useCart } from '../context/CartContext'
+import { createOrderSnapshot } from '../services/orders'
 import CartDrawer from '../components/CartDrawer'
 import cartIcon from '../assets/cart.png'
 import Toast from '../components/Toast'
@@ -68,6 +69,7 @@ function ProductDetails() {
   const [selectedVariation, setSelectedVariation] = useState(null)
   const [openCart, setOpenCart] = useState(false)
   const [added, setAdded] = useState(false)
+  const [comprando, setComprando] = useState(false)
   const [toast, setToast] = useState({ message: '', type: 'success' })
   const [vendedorPhone, setVendedorPhone] = useState(null)
 
@@ -168,14 +170,56 @@ function ProductDetails() {
   // ✅ Usa número do vendedor se disponível, senão usa o da loja
   const phone = vendedorPhone || String(store.whatsapp || '').replace(/\D/g, '')
 
-  const whatsappMessage = `${store.checkout?.messageIntro || 'Olá! Tenho interesse nesse produto:'}
+  // Cria o snapshot do pedido (mesmo padrão do CartDrawer, com 1 item só) e
+  // abre o WhatsApp já com o link de resumo, com foto e detalhe do produto.
+  async function handleComprarAgora() {
+    if (comprando) return
+    if (!product.available || availableSizes.length === 0) { showToast('Produto indisponível', 'warning'); return }
+    if (!selectedSize) { showToast('Selecione um tamanho', 'warning'); return }
+    if (!sizeHasStock(product, selectedVariation, selectedSize)) { showToast('Este tamanho está esgotado', 'warning'); return }
+    if (product.variations?.length > 0 && !selectedVariation && !product.mainColor) { showToast('Selecione uma cor', 'warning'); return }
 
-Produto: ${product.name}
-Preço: ${formattedPrice}
-Cor: ${selectedColor}
-Tamanho: ${selectedSize || '-'}`
+    setComprando(true)
 
-  const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}`
+    const item = {
+      ...product,
+      image: selectedImage || productImages[0],
+      selectedSize,
+      selectedColor,
+      price: product.price,
+      quantity: 1,
+    }
+
+    const detalhes = `Produto: ${product.name}
+${selectedColor && selectedColor !== '-' ? `Cor: ${selectedColor}\n` : ''}Tamanho: ${selectedSize}
+Preço: ${formattedPrice}`
+
+    try {
+      const orderLink = await createOrderSnapshot(storeSlug, [item], Number(product.price))
+
+      const whatsappText = `${store.checkout?.messageIntro || 'Olá! Tenho interesse nesse produto:'}
+
+${detalhes}
+
+🔗 Detalhes do pedido (com foto): ${orderLink}
+
+Pode me ajudar?`
+
+      window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappText)}`
+    } catch {
+      // Se salvar o snapshot falhar (ex: sem internet), não trava o cliente:
+      // manda a mensagem sem o link, do jeito que já funcionava antes.
+      const whatsappText = `${store.checkout?.messageIntro || 'Olá! Tenho interesse nesse produto:'}
+
+${detalhes}
+
+Pode me ajudar?`
+
+      window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappText)}`
+    }
+
+    setComprando(false)
+  }
 
   return (
     <>
@@ -291,7 +335,7 @@ Tamanho: ${selectedSize || '-'}`
 
           <div className="product-actions">
             <button
-              className={`add-cart-button ${added ? 'added' : ''}`}
+              className={`whatsapp-button add-cart-button ${added ? 'added' : ''}`}
               disabled={!product.available || availableSizes.length === 0}
               onClick={() => {
                 if (!product.available || availableSizes.length === 0) { showToast('Produto indisponível', 'warning'); return }
@@ -310,12 +354,12 @@ Tamanho: ${selectedSize || '-'}`
                 setTimeout(() => setAdded(false), 1000)
               }}
             >
-              {!product.available || availableSizes.length === 0 ? 'Indisponível' : added ? '✔ Adicionado' : 'Adicionar'}
+              {!product.available || availableSizes.length === 0 ? 'Indisponível' : added ? '✔ Adicionado' : 'Adicionar ao carrinho'}
             </button>
 
             {product.available && availableSizes.length > 0 && (
-              <button className="whatsapp-button" onClick={() => { window.location.href = whatsappLink }}>
-                Comprar pelo WhatsApp
+              <button className="whatsapp-button" disabled={comprando} onClick={handleComprarAgora}>
+                {comprando ? 'Preparando pedido...' : 'Comprar pelo WhatsApp'}
               </button>
             )}
           </div>

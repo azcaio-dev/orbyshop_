@@ -496,7 +496,8 @@ body {
 
 /* botão adicionar */
 .add-cart-button {
-  background: var(--color-secondary);
+  background: var(--color-primary);
+  color: var(--color-white);
   border: none;
 }
 
@@ -528,8 +529,8 @@ body {
 }
 
 .product-actions .add-cart-button {
-  background: var(--color-secondary);
-  color: var(--color-text);
+  background: var(--color-primary);
+  color: var(--color-white);
   border: none;
 }
 
