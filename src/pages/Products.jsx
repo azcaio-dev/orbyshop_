@@ -1,7 +1,7 @@
 import cartIcon from '../assets/cart.png'
 import menuIcon from '../assets/menu.png'
-import { useEffect, useState } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { useEffect, useState, useCallback } from 'react'
+import { collection, getDocs, query, where, orderBy, limit, startAfter } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import CartDrawer from '../components/CartDrawer'
 import { useCart } from '../context/CartContext'
@@ -13,33 +13,22 @@ import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 import LoadingScreen from '../components/LoadingScreen'
 
-function sortProductsByCategory(products) {
-  return [...products].sort((a, b) => {
-    const categoryA = a.category || 'Sem categoria'
-    const categoryB = b.category || 'Sem categoria'
-    if (categoryA !== categoryB) return categoryA.localeCompare(categoryB, 'pt-BR')
-    return (a.name || '').localeCompare(b.name || '', 'pt-BR')
-  })
-}
-
 const sectionLabels = {
   launch: 'Lançamentos',
   bestseller: 'Mais vendidos',
   outlet: 'Outlet',
 }
 
-// ✅ No desktop a grade é de 4 colunas, então carrega de 12 em 12
-// (múltiplo de 4, sem deixar linha incompleta). No mobile é 2 colunas,
-// carrega de 10 em 10.
+// No desktop a grade é de 4 colunas, então carrega de 12 em 12
+// (múltiplo de 4, sem deixar linha incompleta). No mobile é 2 colunas, 10 em 10.
 function getPageSize() {
   if (typeof window === 'undefined') return 10
   return window.innerWidth >= 1024 ? 12 : 10
 }
 
-// ✅ Verifica se um produto tem pelo menos um tamanho com estoque > 0
+// Verifica se um produto tem pelo menos um tamanho com estoque > 0
 function hasAnyStock(product) {
   if (!product.available) return false
-  // Se não usa controle de estoque por tamanho, confia no available
   if (!product.sizeStocks && (!product.variations || product.variations.length === 0)) {
     return product.available
   }
@@ -50,14 +39,13 @@ function hasAnyStock(product) {
   return mainStock || variationStock
 }
 
-// ✅ Retorna os tamanhos com estoque > 0 para um produto (na variação principal)
+// Retorna os tamanhos com estoque > 0 para um produto (na variação principal)
 function getSizesWithStock(product) {
   const sizes = product.sizes || []
-  if (!product.sizeStocks) return sizes // sem controle de estoque, mostra todos
+  if (!product.sizeStocks) return sizes
   return sizes.filter((size) => Number(product.sizeStocks[size] || 0) > 0)
 }
 
-// ✅ Formata a forma de pagamento pra exibição
 function formatPaymentMethod(paymentMethod) {
   if (!paymentMethod || paymentMethod === 'vista') return 'À vista'
   return `${paymentMethod} sem juros`
@@ -75,28 +63,45 @@ function Products() {
   useStoreTheme(store)
 
   const [scrolled, setScrolled] = useState(false)
-  const [products, setProducts] = useState([])
+
+  // Produtos paginados (o que realmente aparece na grade)
+  const PAGE_SIZE = getPageSize()
   const [filteredProducts, setFilteredProducts] = useState([])
+  const [lastDoc, setLastDoc] = useState(null)
+  const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+
   const [addedId, setAddedId] = useState(null)
   const [openCart, setOpenCart] = useState(false)
   const [openMenu, setOpenMenu] = useState(false)
   const [openBrands, setOpenBrands] = useState(false)
   const [openCategories, setOpenCategories] = useState(false)
-  const [activeFilter, setActiveFilter] = useState(null)
+
+  // activeFilter: null | 'launch' | 'bestseller' | 'outlet' | 'brand' | 'category' | 'search'
+  const [activeFilter, setActiveFilter] = useState(section && sectionLabels[section] ? section : null)
+  const [filterValue, setFilterValue] = useState(null) // valor da marca/categoria escolhida
+  const [filterLabel, setFilterLabel] = useState(section && sectionLabels[section] ? sectionLabels[section] : '')
+
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [selectedSize, setSelectedSize] = useState('')
-  const [filterLabel, setFilterLabel] = useState('')
-  const [visibleCount, setVisibleCount] = useState(getPageSize)
   const [openSearch, setOpenSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSizeFilter, setSelectedSizeFilter] = useState(null)
+  const [selectedSizeFilter, setSelectedSizeFilter] = useState(sizeParam || null)
   const [openFilters, setOpenFilters] = useState(false)
+
+  // Facetas (marcas, categorias, tamanhos) — buscadas sob demanda, uma vez só,
+  // quando o cliente abre o menu/filtro correspondente. Não bloqueiam o
+  // carregamento inicial da página.
+  const [brands, setBrands] = useState([])
+  const [categories, setCategories] = useState([])
+  const [allSizes, setAllSizes] = useState([])
+  const [facetsLoaded, setFacetsLoaded] = useState(false)
+  const [facetsLoading, setFacetsLoading] = useState(false)
 
   const cartQuantity = cart.reduce((acc, item) => acc + item.quantity, 0)
 
-  // ✅ Salva logo/cores em cache leve pra próxima tela de carregamento
-  // já nascer com a identidade certa, sem precisar esperar o Firestore.
+  // Salva logo/cores em cache leve pra próxima tela de carregamento
   useEffect(() => {
     if (!store || !storeSlug) return
     try {
@@ -105,7 +110,7 @@ function Products() {
         JSON.stringify({ logo: store.logo, name: store.name, colors: store.colors })
       )
     } catch {
-      // sessionStorage indisponível (modo privado, etc.) — sem problema, só não cacheia
+      // sessionStorage indisponível — sem problema, só não cacheia
     }
   }, [store, storeSlug])
 
@@ -130,44 +135,118 @@ function Products() {
   }, [openMenu, openCart])
 
   useEffect(() => {
-    if (sizeParam) setSelectedSizeFilter(sizeParam)
-    else setSelectedSizeFilter(null)
+    setSelectedSizeFilter(sizeParam || null)
   }, [sizeParam])
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoading(true)
-        const snapshot = await getDocs(collection(db, 'stores', storeSlug, 'products'))
-        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        const sortedData = sortProductsByCategory(data)
-        setProducts(sortedData)
-        if (section && sectionLabels[section]) {
-          const filtered = sortProductsByCategory(sortedData.filter((p) => p.productSection === section))
-          setFilteredProducts(filtered)
-          setActiveFilter(section)
-          setFilterLabel(sectionLabels[section])
-        } else {
-          setFilteredProducts(sortedData)
-          setActiveFilter(null)
-          setFilterLabel('')
-        }
-        setVisibleCount(getPageSize())
-      } catch (error) {
-        console.error('Erro ao carregar produtos:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadProducts()
-  }, [storeSlug, section])
+  // ---------------------------------------------------------------------
+  // Busca paginada real: monta a query de acordo com o filtro ativo e
+  // pede só um lote (PAGE_SIZE) por vez, usando startAfter pra continuar
+  // de onde parou. Nunca busca o catálogo inteiro.
+  // ---------------------------------------------------------------------
+  const buildQuery = useCallback((startAfterDoc) => {
+    const baseRef = collection(db, 'stores', storeSlug, 'products')
+    const constraints = []
 
-  const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))]
-  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
+    if (activeFilter === 'brand' && filterValue) {
+      constraints.push(where('brand', '==', filterValue))
+    } else if (activeFilter === 'category' && filterValue) {
+      constraints.push(where('category', '==', filterValue))
+    } else if (['launch', 'bestseller', 'outlet'].includes(activeFilter)) {
+      constraints.push(where('productSection', '==', activeFilter))
+    }
+
+    // Disponíveis primeiro, indisponíveis por último — depois ordena por categoria/nome
+    constraints.push(orderBy('available', 'desc'), orderBy('category'), orderBy('name'))
+    if (startAfterDoc) constraints.push(startAfter(startAfterDoc))
+    constraints.push(limit(PAGE_SIZE))
+
+    return query(baseRef, ...constraints)
+  }, [storeSlug, activeFilter, filterValue, PAGE_SIZE])
+
+  const loadPage = useCallback(async (reset = false) => {
+    try {
+      if (reset) setLoading(true)
+      else setLoadingMore(true)
+
+      const q = buildQuery(reset ? null : lastDoc)
+      const snapshot = await getDocs(q)
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+
+      setFilteredProducts((prev) => (reset ? data : [...prev, ...data]))
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null)
+      setHasMore(snapshot.docs.length === PAGE_SIZE)
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error)
+      // Se a busca com filtro novo falhar, não deixa a lista antiga (de outro
+      // filtro) enganando na tela — melhor mostrar "nenhum produto encontrado"
+      // e deixar claro no console que algo deu errado (geralmente índice faltando).
+      if (reset) {
+        setFilteredProducts([])
+        setHasMore(false)
+      }
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }, [buildQuery, lastDoc, PAGE_SIZE])
+
+  // Reseta e recarrega sempre que o filtro ativo mudar (seção, marca, categoria, ou nenhum)
+  useEffect(() => {
+    loadPage(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeSlug, activeFilter, filterValue])
+
+  // ---------------------------------------------------------------------
+  // Facetas (marcas / categorias / tamanhos) sob demanda.
+  // Só busca o catálogo completo (uma vez, com cache em memória) quando o
+  // cliente realmente abre o menu de filtros — não no carregamento inicial.
+  // ---------------------------------------------------------------------
+  async function loadFacetsIfNeeded() {
+    if (facetsLoaded || facetsLoading) return
+    try {
+      setFacetsLoading(true)
+      const snapshot = await getDocs(collection(db, 'stores', storeSlug, 'products'))
+      const data = snapshot.docs.map((doc) => doc.data())
+
+      setBrands([...new Set(data.map((p) => p.brand).filter(Boolean))])
+      setCategories([...new Set(data.map((p) => p.category).filter(Boolean))])
+      setAllSizes([...new Set(data.flatMap((p) => p.sizes || []))].sort())
+      setFacetsLoaded(true)
+    } catch (error) {
+      console.error('Erro ao carregar filtros:', error)
+    } finally {
+      setFacetsLoading(false)
+    }
+  }
+
+  function selectSection(sectionKey) {
+    setActiveFilter(sectionKey)
+    setFilterValue(null)
+    setFilterLabel(sectionLabels[sectionKey])
+    setOpenMenu(false)
+  }
+
+  function selectBrand(brand) {
+    setActiveFilter('brand')
+    setFilterValue(brand)
+    setFilterLabel(`${store.menu?.brandsLabel || 'Marcas'} > ${brand}`)
+    setOpenMenu(false)
+  }
+
+  function selectCategory(cat) {
+    setActiveFilter('category')
+    setFilterValue(cat)
+    setFilterLabel(`${store.menu?.categoriesLabel || 'Peças'} > ${cat}`)
+    setOpenMenu(false)
+  }
+
+  function clearFilter() {
+    setActiveFilter(null)
+    setFilterValue(null)
+    setFilterLabel('')
+  }
 
   if (storeLoading || !store) return <LoadingScreen store={store} storeSlug={storeSlug} />
-
-  const allSizes = [...new Set(products.flatMap((p) => p.sizes || []))].sort()
 
   if (store.active === false) {
     return (
@@ -182,6 +261,17 @@ function Products() {
       </main>
     )
   }
+
+  // Filtro de tamanho aplicado só sobre o lote já carregado (não sobre o catálogo inteiro).
+  // Se o cliente filtrar por tamanho e a página atual tiver poucos resultados,
+  // "Ver mais" ainda busca mais produtos do Firestore normalmente.
+  const displayed = selectedSizeFilter
+    ? filteredProducts.filter((p) => {
+        if (!p.sizes?.includes(selectedSizeFilter)) return false
+        if (!p.sizeStocks || Object.keys(p.sizeStocks).length === 0) return p.available
+        return Number(p.sizeStocks[selectedSizeFilter] || 0) > 0
+      })
+    : filteredProducts
 
   return (
     <div>
@@ -205,14 +295,19 @@ function Products() {
         </div>
       </header>
 
+      {/* Nota: a busca por texto (SearchPanel) ainda depende de uma lista de
+          produtos em memória — isso é uma limitação separada, fora do escopo
+          da paginação. Ver observação no chat sobre isso. */}
       <SearchPanel openSearch={openSearch} searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-        products={products} setFilteredProducts={setFilteredProducts}
+        products={filteredProducts} setFilteredProducts={setFilteredProducts}
         setActiveFilter={setActiveFilter} setFilterLabel={setFilterLabel} />
 
       <main className="container products-page fade-in">
         <h2 className="section-title">{activeFilter ? filterLabel : 'Todos os produtos'}</h2>
 
-        <button className="filter-toggle-button" onClick={() => setOpenFilters(!openFilters)}
+        <button
+          className="filter-toggle-button"
+          onClick={() => { setOpenFilters(!openFilters); loadFacetsIfNeeded() }}
           style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: '#fff',
             border: 'none', borderRadius: '999px', padding: '9px 18px', fontSize: '14px',
             fontWeight: '500', color: '#111', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.10)' }}>
@@ -221,9 +316,10 @@ function Products() {
             : <><span style={{ fontSize: '16px', lineHeight: 1 }}>⇅</span> Filtrar</>}
         </button>
 
-        {!activeFilter && openFilters && allSizes.length > 0 && (
+        {!activeFilter && openFilters && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px', alignItems: 'center' }}>
             <span style={{ fontSize: '13px', opacity: 0.6, marginRight: '4px' }}>Tamanho:</span>
+            {facetsLoading && <span style={{ fontSize: '13px', opacity: 0.5 }}>Carregando...</span>}
             {allSizes.map((size) => (
               <button key={size}
                 onClick={() => {
@@ -261,82 +357,66 @@ function Products() {
         <section className="products-grid">
           {loading ? (
             <>{[1,2,3,4,5,6].map((i) => <div key={i} className="skeleton-card" />)}</>
-          ) : (
-            (() => {
-              const displayed = selectedSizeFilter
-                ? filteredProducts.filter((p) => {
-                    if (!p.sizes?.includes(selectedSizeFilter)) return false
-                    // Se não tem controle de estoque por tamanho, confia no available
-                    if (!p.sizeStocks || Object.keys(p.sizeStocks).length === 0) return p.available
-                    // Verifica se o tamanho específico tem estoque > 0
-                    return Number(p.sizeStocks[selectedSizeFilter] || 0) > 0
-                  })
-                : filteredProducts
+          ) : displayed.length > 0 ? (
+            displayed.map((product) => {
+              const canAdd = hasAnyStock(product)
 
-              return displayed.length > 0 ? (
-                displayed.slice(0, visibleCount).map((product) => {
-                  // ✅ Verifica estoque real antes de permitir adicionar
-                  const canAdd = hasAnyStock(product)
+              return (
+                <article
+                  className={`product-card ${!canAdd ? 'unavailable' : ''}`}
+                  key={product.id}
+                  onClick={() => navigate(`${storePrefix}/produto/${product.id}`)}
+                >
+                  <div className="product-image-wrapper" style={{ position: 'relative' }}>
+                    <img src={product.images?.[0] || product.image} alt={product.name} className="product-image" loading="lazy" />
+                    {!canAdd && <span className="unavailable-badge">Indisponível</span>}
+                    {product.productSection === 'outlet' && product.oldPrice && (
+                      <span className="discount-badge">
+                        {Math.round((1 - product.price / product.oldPrice) * 100)}%
+                      </span>
+                    )}
+                  </div>
 
-                  return (
-                    <article
-                      className={`product-card ${!canAdd ? 'unavailable' : ''}`}
-                      key={product.id}
-                      onClick={() => navigate(`${storePrefix}/produto/${product.id}`)}
-                    >
-                      <div className="product-image-wrapper" style={{ position: 'relative' }}>
-                        <img src={product.images?.[0] || product.image} alt={product.name} className="product-image" />
-                        {!canAdd && <span className="unavailable-badge">Indisponível</span>}
-                        {product.productSection === 'outlet' && product.oldPrice && (
-                          <span className="discount-badge">
-                            {Math.round((1 - product.price / product.oldPrice) * 100)}%
+                  <div className="product-info">
+                    <h3>{product.name}</h3>
+                    <div className="price-row">
+                      {product.productSection === 'outlet' && product.oldPrice ? (
+                        <div className="price-box">
+                          <span className="old-price">
+                            {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </span>
-                        )}
-                      </div>
-
-                      <div className="product-info">
-                        <h3>{product.name}</h3>
-                        <div className="price-row">
-                          {product.productSection === 'outlet' && product.oldPrice ? (
-                            <div className="price-box">
-                              <span className="old-price">
-                                {Number(product.oldPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                              </span>
-                              <strong className="current-price">
-                                {Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                              </strong>
-                            </div>
-                          ) : (
-                            <p>{Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                          )}
-                          <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
+                          <strong className="current-price">
+                            {Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </strong>
                         </div>
-                      </div>
-
-                      {activeFilter !== 'search' && (
-                        <button
-                          className={`add-cart-button ${addedId === product.id ? 'added' : ''}`}
-                          disabled={!canAdd}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (!canAdd) return
-                            setSelectedProduct(product)
-                            setSelectedSize('')
-                          }}
-                        >
-                          {!canAdd ? 'Indisponível' : addedId === product.id ? '✔ Adicionado' : '+ Carrinho'}
-                        </button>
+                      ) : (
+                        <p>{Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                       )}
-                    </article>
-                  )
-                })
-              ) : (
-                <div className="empty-products"><p>Nenhum produto encontrado.</p></div>
+                      <span className="payment-method">{formatPaymentMethod(product.paymentMethod)}</span>
+                    </div>
+                  </div>
+
+                  {activeFilter !== 'search' && (
+                    <button
+                      className={`add-cart-button ${addedId === product.id ? 'added' : ''}`}
+                      disabled={!canAdd}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!canAdd) return
+                        setSelectedProduct(product)
+                        setSelectedSize('')
+                      }}
+                    >
+                      {!canAdd ? 'Indisponível' : addedId === product.id ? '✔ Adicionado' : '+ Carrinho'}
+                    </button>
+                  )}
+                </article>
               )
-            })()
+            })
+          ) : (
+            <div className="empty-products"><p>Nenhum produto encontrado.</p></div>
           )}
 
-          {/* MODAL DE TAMANHO */}
           {selectedProduct && createPortal(
             <div className="size-modal-overlay" onClick={() => setSelectedProduct(null)}>
               <div className="size-modal" onClick={(e) => e.stopPropagation()}>
@@ -345,7 +425,6 @@ function Products() {
                 <p>{selectedProduct.name}</p>
 
                 <div className="size-modal-options">
-                  {/* ✅ Só mostra tamanhos com estoque > 0 */}
                   {getSizesWithStock(selectedProduct).map((size) => (
                     <button key={size}
                       className={selectedSize === size ? 'selected' : ''}
@@ -353,7 +432,6 @@ function Products() {
                       {size}
                     </button>
                   ))}
-                  {/* ✅ Tamanhos sem estoque aparecem desabilitados */}
                   {(selectedProduct.sizes || [])
                     .filter((size) => !getSizesWithStock(selectedProduct).includes(size))
                     .map((size) => (
@@ -385,14 +463,14 @@ function Products() {
           )}
         </section>
 
-        {visibleCount < (selectedSizeFilter
-          ? filteredProducts.filter((p) => p.sizes?.includes(selectedSizeFilter))
-          : filteredProducts).length && (
+        {hasMore && !loading && (
           <div className="load-more">
-            <button onClick={() => {
-              setVisibleCount((prev) => prev + getPageSize())
+            <button disabled={loadingMore} onClick={() => {
+              loadPage(false)
               setTimeout(() => window.scrollBy({ top: 300, behavior: 'smooth' }), 100)
-            }}>Ver mais</button>
+            }}>
+              {loadingMore ? 'Carregando...' : 'Ver mais'}
+            </button>
           </div>
         )}
       </main>
@@ -403,20 +481,21 @@ function Products() {
         <button className="close-menu" onClick={() => setOpenMenu(false)}>✕</button>
         <nav className="menu-list">
           <button className="menu-link" onClick={() => { navigate(storePrefix); setOpenMenu(false) }}>Home</button>
-          <button className="menu-link" onClick={() => { setOpenMenu(false); setTimeout(() => navigate(`${storePrefix}/produtos`), 150) }}>Todos os produtos</button>
-          <button className="menu-link" onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'launch'))); setActiveFilter('launch'); setFilterLabel('Lançamentos'); setOpenMenu(false) }}>Lançamentos</button>
-          <button className="menu-link" onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'bestseller'))); setActiveFilter('bestseller'); setFilterLabel('Mais vendidos'); setOpenMenu(false) }}>Mais vendidos</button>
-          <button className="menu-link" onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.productSection === 'outlet'))); setActiveFilter('outlet'); setFilterLabel('Outlet'); setOpenMenu(false) }}>Outlet</button>
+          <button className="menu-link" onClick={() => { clearFilter(); setOpenMenu(false) }}>Todos os produtos</button>
+          <button className="menu-link" onClick={() => selectSection('launch')}>Lançamentos</button>
+          <button className="menu-link" onClick={() => selectSection('bestseller')}>Mais vendidos</button>
+          <button className="menu-link" onClick={() => selectSection('outlet')}>Outlet</button>
 
           {store.menu?.showBrands && (
             <>
-              <button className="menu-link" onClick={() => setOpenBrands(!openBrands)}>
+              <button className="menu-link" onClick={() => { setOpenBrands(!openBrands); loadFacetsIfNeeded() }}>
                 <span>{store.menu?.brandsLabel || 'Marcas'}</span><span>›</span>
               </button>
               {openBrands && (
                 <div className="submenu">
+                  {facetsLoading && <span style={{ fontSize: '13px', opacity: 0.5, padding: '4px 12px' }}>Carregando...</span>}
                   {brands.map((brand) => (
-                    <button key={brand} onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.brand === brand))); setActiveFilter('brand'); setFilterLabel(`${store.menu?.brandsLabel || 'Marcas'} > ${brand}`); setOpenMenu(false) }}>{brand}</button>
+                    <button key={brand} onClick={() => selectBrand(brand)}>{brand}</button>
                   ))}
                 </div>
               )}
@@ -425,13 +504,14 @@ function Products() {
 
           {store.menu?.showCategories !== false && (
             <>
-              <button className="menu-link" onClick={() => setOpenCategories(!openCategories)}>
+              <button className="menu-link" onClick={() => { setOpenCategories(!openCategories); loadFacetsIfNeeded() }}>
                 <span>{store.menu?.categoriesLabel || 'Peças'}</span><span>›</span>
               </button>
               {openCategories && (
                 <div className="submenu">
+                  {facetsLoading && <span style={{ fontSize: '13px', opacity: 0.5, padding: '4px 12px' }}>Carregando...</span>}
                   {categories.map((cat) => (
-                    <button key={cat} onClick={() => { setVisibleCount(getPageSize()); setFilteredProducts(sortProductsByCategory(products.filter((p) => p.category === cat))); setActiveFilter('category'); setFilterLabel(`${store.menu?.categoriesLabel || 'Peças'} > ${cat}`); setOpenMenu(false) }}>{cat}</button>
+                    <button key={cat} onClick={() => selectCategory(cat)}>{cat}</button>
                   ))}
                 </div>
               )}

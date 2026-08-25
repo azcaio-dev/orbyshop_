@@ -14,6 +14,7 @@ import useStoreTheme from '../hooks/useStoreTheme'
 import SobreNos from '../components/SobreNos'
 import ReviewsCarousel from '../components/ReviewsCarousel'
 import LoadingScreen from '../components/LoadingScreen'
+import { otimizarImagem } from '../utils/otimizarImagem'
 
 // ✅ Formata a forma de pagamento pra exibição
 function formatPaymentMethod(paymentMethod) {
@@ -345,7 +346,7 @@ const storePrefix = `/${storeSlug}`
                       />
                     )}
                     <img
-                      src={banner.image}
+                      src={otimizarImagem(banner.image, 1200)}
                       alt={`Banner ${store.name}`}
                       className="banner-image"
                     />
@@ -432,7 +433,7 @@ const storePrefix = `/${storeSlug}`
                     onClick={() => goToProduct(product.id)}
                   >
                     <img 
-                      src={product.images?.[0] || product.image}
+                      src={otimizarImagem(product.images?.[0] || product.image, 300)}
                       alt={product.name} 
                       loading="lazy" />
 
@@ -483,7 +484,7 @@ const storePrefix = `/${storeSlug}`
                     className="launch-card"
                     onClick={() => goToProduct(product.id)}
                   >
-                    <img src={product.images?.[0] || product.image}
+                    <img src={otimizarImagem(product.images?.[0] || product.image, 300)}
                     alt={product.name} />
 
                     <div>
@@ -534,7 +535,7 @@ const storePrefix = `/${storeSlug}`
                     style={{ position: 'relative' }}
                     onClick={() => goToProduct(product.id)}
                   >
-                    <img src={product.images?.[0] || product.image}
+                    <img src={otimizarImagem(product.images?.[0] || product.image, 300)}
                     alt={product.name} />
 
                     {product.oldPrice && (
@@ -606,10 +607,10 @@ const storePrefix = `/${storeSlug}`
                   >
                     <div className="product-image-wrapper">
                       <img
-                        src={product.images?.[0] || product.image}
+                        src={otimizarImagem(product.images?.[0] || product.image, 400)}
                         alt={product.name}
                         className="product-image"
-                        loading='lazy'
+                        loading="lazy"
                       />
 
                       {!product.available && (
