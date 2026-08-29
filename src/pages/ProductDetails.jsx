@@ -10,6 +10,7 @@ import Toast from '../components/Toast'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 import LoadingScreen from '../components/LoadingScreen'
+import ProductImageZoom from '../components/ProductImageZoom'
 
 function getSizesWithStock(product, variation) {
   const sizes = variation?.sizes || product.sizes || []
@@ -234,7 +235,7 @@ Pode me ajudar?`
       <main className="product-details fade-in">
         <section className="product-gallery">
           <div style={{ position: 'relative' }}>
-            <img src={selectedImage || productImages[0]} alt={product.name} className="main-product-image" />
+            <ProductImageZoom src={selectedImage || productImages[0]} alt={product.name} />
             {product.productSection === 'outlet' && product.oldPrice && (
               <span className="discount-badge">
                 {Math.round((1 - product.price / product.oldPrice) * 100)}%
