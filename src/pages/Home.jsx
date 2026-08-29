@@ -597,7 +597,7 @@ const storePrefix = `/${storeSlug}`
               {filterLabel || 'Resultados'}
             </h2>
 
-            <section className="products-grid fade-in">
+            <section className="products-grid">
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((product) => (
                   <article
