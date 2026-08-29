@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * ProductImageZoom
@@ -225,7 +226,12 @@ function PinchLightbox({ src, alt, onClose }) {
     };
   })();
 
-  return (
+  // Monta direto no document.body via portal: se algum elemento pai da
+  // página (ex: animações de scroll-reveal/fade que usam transform) criar
+  // um "containing block", position:fixed passa a se referir a esse pai em
+  // vez da tela inteira — o lightbox nasce deslocado/cortado. O portal
+  // escapa desse problema garantindo que o fixed sempre cubra a viewport.
+  return createPortal(
     <div className="piz-lightbox" role="dialog" aria-modal="true">
       <button
         type="button"
@@ -258,7 +264,8 @@ function PinchLightbox({ src, alt, onClose }) {
       {scale === 1 && (
         <p className="piz-lightbox-hint">Toque duas vezes ou belisque para ampliar</p>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
 
