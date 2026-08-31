@@ -205,12 +205,18 @@ function AdminFinancial() {
   const bestDayIndex = salesByDay.indexOf(Math.max(...salesByDay))
   const bestDay = Math.max(...salesByDay) > 0 ? DAYS[bestDayIndex] : '—'
 
+  // ── Campeão do mês ────────────────────────────────────────────
+  // Vendas novas guardam os produtos em `sale.items[]`; vendas antigas
+  // (pré multi-item) tinham `productName` direto na raiz do documento.
   const productMap = {}
   currentMonthSales.forEach((sale) => {
-    if (!sale.productName) return
-    if (!productMap[sale.productName]) productMap[sale.productName] = { qty: 0, total: 0 }
-    productMap[sale.productName].qty += Number(sale.quantity || 1)
-    productMap[sale.productName].total += Number(sale.total || 0)
+    const items = sale.items || (sale.productName ? [sale] : [])
+    items.forEach((item) => {
+      if (!item.productName) return
+      if (!productMap[item.productName]) productMap[item.productName] = { qty: 0, total: 0 }
+      productMap[item.productName].qty += Number(item.quantity || 1)
+      productMap[item.productName].total += Number(item.total || 0)
+    })
   })
   const bestProduct = Object.entries(productMap).sort((a, b) => b[1].qty - a[1].qty)[0]
 
