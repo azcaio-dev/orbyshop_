@@ -51,6 +51,92 @@ function formatPaymentMethod(paymentMethod) {
   return `${paymentMethod} sem juros`
 }
 
+// Tamanhos são agrupados pelo mesmo "sizeType" gravado no cadastro do produto
+// (AdminProducts.jsx): 'letter' | 'number' | 'age' | 'unique'. Nada de adivinhar
+// por regex — números e idades já vêm separados desde o admin.
+const SIZE_TYPE_LABELS = {
+  letter: 'Tamanho · Letra',
+  number: 'Tamanho · Número',
+  age: 'Tamanho · Idade',
+  unique: 'Tamanho único',
+}
+const SIZE_TYPE_ORDER = ['age', 'number', 'letter', 'unique']
+
+// Ordena tamanhos numéricos e por idade pelo valor numérico inicial (15, 16... / 1 ano, 2 anos...)
+function sortByLeadingNumber(sizes) {
+  return [...sizes].sort((a, b) => parseFloat(a) - parseFloat(b))
+}
+
+// Ordem "natural" pros tamanhos-letra cadastrados no admin; o resto entra em ordem alfabética
+const LETTER_SIZE_ORDER = ['PP', 'P', 'M', 'G', 'GG', 'G1', 'G2', 'G3']
+function sortLetterSizes(sizes) {
+  return [...sizes].sort((a, b) => {
+    const ia = LETTER_SIZE_ORDER.indexOf(a)
+    const ib = LETTER_SIZE_ORDER.indexOf(b)
+    if (ia !== -1 && ib !== -1) return ia - ib
+    if (ia !== -1) return -1
+    if (ib !== -1) return 1
+    return a.localeCompare(b, 'pt-BR')
+  })
+}
+
+const chipStyle = (active) => ({
+  padding: '6px 14px',
+  borderRadius: '20px',
+  border: '1px solid var(--color-primary, #111)',
+  background: active ? 'var(--color-primary, #111)' : 'transparent',
+  color: active ? '#fff' : 'var(--color-primary, #111)',
+  fontSize: '13px',
+  cursor: 'pointer',
+  fontWeight: active ? '600' : '400',
+  transition: 'all 0.2s',
+})
+
+// Campo de filtro tipo "select": fechado mostra só o rótulo; ao clicar, abre
+// as opções; ao escolher uma, fecha de novo e passa a mostrar só o valor
+// escolhido (com um "x" pra limpar e reabrir a escolha).
+function FilterSelect({ label, value, options, onSelect, onClear }) {
+  const [open, setOpen] = useState(false)
+
+  if (!options || options.length === 0) return null
+
+  return (
+    <div>
+      <div style={{ fontSize: '12px', fontWeight: '600', opacity: 0.55, textTransform: 'uppercase',
+        letterSpacing: '0.04em', marginBottom: '8px' }}>
+        {label}
+      </div>
+
+      {value ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={chipStyle(true)}>{value}</span>
+          <button type="button" onClick={onClear}
+            style={{ border: 'none', background: 'transparent', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
+            ✕ limpar
+          </button>
+        </div>
+      ) : (
+        <>
+          <button type="button" onClick={() => setOpen((o) => !o)}
+            style={{ padding: '6px 14px', borderRadius: '20px', border: '1px dashed #ccc',
+              background: 'transparent', color: '#666', fontSize: '13px', cursor: 'pointer' }}>
+            {open ? 'Fechar ▲' : 'Selecionar ▼'}
+          </button>
+          {open && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+              {options.map((opt) => (
+                <button key={opt} type="button" onClick={() => { onSelect(opt); setOpen(false) }} style={chipStyle(false)}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 function Products() {
   const { cart, addToCart } = useCart()
   const navigate = useNavigate()
@@ -78,10 +164,15 @@ function Products() {
   const [openBrands, setOpenBrands] = useState(false)
   const [openCategories, setOpenCategories] = useState(false)
 
-  // activeFilter: null | 'launch' | 'bestseller' | 'outlet' | 'brand' | 'category' | 'search'
-  const [activeFilter, setActiveFilter] = useState(section && sectionLabels[section] ? section : null)
-  const [filterValue, setFilterValue] = useState(null) // valor da marca/categoria escolhida
-  const [filterLabel, setFilterLabel] = useState(section && sectionLabels[section] ? sectionLabels[section] : '')
+  // activeSection: null | 'launch' | 'bestseller' | 'outlet'
+  // Seções (menu lateral) continuam exclusivas entre si — ao entrar numa seção,
+  // os filtros de marca/categoria/tamanho da página "Todos os produtos" são limpos.
+  const [activeSection, setActiveSection] = useState(section && sectionLabels[section] ? section : null)
+
+  // Marca e categoria agora são combináveis entre si (e com tamanho),
+  // desde que nenhuma seção esteja ativa.
+  const [selectedBrand, setSelectedBrand] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState(null)
 
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [selectedSize, setSelectedSize] = useState('')
@@ -95,7 +186,7 @@ function Products() {
   // carregamento inicial da página.
   const [brands, setBrands] = useState([])
   const [categories, setCategories] = useState([])
-  const [allSizes, setAllSizes] = useState([])
+  const [sizesByType, setSizesByType] = useState({ letter: [], number: [], age: [], unique: [] })
   const [facetsLoaded, setFacetsLoaded] = useState(false)
   const [facetsLoading, setFacetsLoading] = useState(false)
 
@@ -139,29 +230,43 @@ function Products() {
   }, [sizeParam])
 
   // ---------------------------------------------------------------------
-  // Busca paginada real: monta a query de acordo com o filtro ativo e
+  // Busca paginada real: monta a query de acordo com os filtros ativos e
   // pede só um lote (PAGE_SIZE) por vez, usando startAfter pra continuar
   // de onde parou. Nunca busca o catálogo inteiro.
+  //
+  // Marca + categoria agora podem ser combinadas. Isso exige índices
+  // compostos extras no Firestore (um pra cada combinação usada):
+  //   - available(desc), category, name                        [sem filtro]
+  //   - brand(==), available(desc), category, name              [só marca]
+  //   - category(==), available(desc), name                     [só categoria]
+  //   - brand(==), category(==), available(desc), name           [marca+categoria]
+  //   - productSection(==), available(desc), category, name     [seção]
+  // Se faltar algum, o Firestore retorna um erro no console com um link
+  // direto pra criar o índice — é só clicar (mesmo fluxo já usado antes
+  // pra loja Labany).
   // ---------------------------------------------------------------------
   const buildQuery = useCallback((startAfterDoc) => {
     const baseRef = collection(db, 'stores', storeSlug, 'products')
     const constraints = []
 
-    if (activeFilter === 'brand' && filterValue) {
-      constraints.push(where('brand', '==', filterValue))
-    } else if (activeFilter === 'category' && filterValue) {
-      constraints.push(where('category', '==', filterValue))
-    } else if (['launch', 'bestseller', 'outlet'].includes(activeFilter)) {
-      constraints.push(where('productSection', '==', activeFilter))
+    if (activeSection) {
+      constraints.push(where('productSection', '==', activeSection))
+      constraints.push(orderBy('available', 'desc'), orderBy('category'), orderBy('name'))
+    } else {
+      if (selectedBrand) constraints.push(where('brand', '==', selectedBrand))
+      if (selectedCategory) constraints.push(where('category', '==', selectedCategory))
+
+      constraints.push(orderBy('available', 'desc'))
+      // Se já filtrando por categoria, ordenar por ela de novo é redundante
+      if (!selectedCategory) constraints.push(orderBy('category'))
+      constraints.push(orderBy('name'))
     }
 
-    // Disponíveis primeiro, indisponíveis por último — depois ordena por categoria/nome
-    constraints.push(orderBy('available', 'desc'), orderBy('category'), orderBy('name'))
     if (startAfterDoc) constraints.push(startAfter(startAfterDoc))
     constraints.push(limit(PAGE_SIZE))
 
     return query(baseRef, ...constraints)
-  }, [storeSlug, activeFilter, filterValue, PAGE_SIZE])
+  }, [storeSlug, activeSection, selectedBrand, selectedCategory, PAGE_SIZE])
 
   const loadPage = useCallback(async (reset = false) => {
     try {
@@ -190,11 +295,11 @@ function Products() {
     }
   }, [buildQuery, lastDoc, PAGE_SIZE])
 
-  // Reseta e recarrega sempre que o filtro ativo mudar (seção, marca, categoria, ou nenhum)
+  // Reseta e recarrega sempre que algum filtro mudar (seção, marca, categoria)
   useEffect(() => {
     loadPage(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeSlug, activeFilter, filterValue])
+  }, [storeSlug, activeSection, selectedBrand, selectedCategory])
 
   // ---------------------------------------------------------------------
   // Facetas (marcas / categorias / tamanhos) sob demanda.
@@ -208,9 +313,28 @@ function Products() {
       const snapshot = await getDocs(collection(db, 'stores', storeSlug, 'products'))
       const data = snapshot.docs.map((doc) => doc.data())
 
-      setBrands([...new Set(data.map((p) => p.brand).filter(Boolean))])
-      setCategories([...new Set(data.map((p) => p.category).filter(Boolean))])
-      setAllSizes([...new Set(data.flatMap((p) => p.sizes || []))].sort())
+      setBrands([...new Set(data.map((p) => p.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')))
+      setCategories([...new Set(data.map((p) => p.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')))
+
+      // Junta os tamanhos de cada produto E de cada variação de cor, respeitando
+      // o sizeType gravado em cada um (um produto pode não ter o mesmo tipo que sua variação)
+      const buckets = { letter: new Set(), number: new Set(), age: new Set(), unique: new Set() }
+      function collect(sizeType, sizes) {
+        const bucket = buckets[sizeType] || buckets.letter
+        ;(sizes || []).forEach((size) => bucket.add(size))
+      }
+      data.forEach((p) => {
+        collect(p.sizeType || 'letter', p.sizes)
+        ;(p.variations || []).forEach((v) => collect(v.sizeType || 'letter', v.sizes))
+      })
+
+      setSizesByType({
+        letter: sortLetterSizes([...buckets.letter]),
+        number: sortByLeadingNumber([...buckets.number]),
+        age: sortByLeadingNumber([...buckets.age]),
+        unique: [...buckets.unique],
+      })
+
       setFacetsLoaded(true)
     } catch (error) {
       console.error('Erro ao carregar filtros:', error)
@@ -220,31 +344,57 @@ function Products() {
   }
 
   function selectSection(sectionKey) {
-    setActiveFilter(sectionKey)
-    setFilterValue(null)
-    setFilterLabel(sectionLabels[sectionKey])
+    setActiveSection((prev) => (prev === sectionKey ? null : sectionKey))
+    setSelectedBrand(null)
+    setSelectedCategory(null)
     setOpenMenu(false)
   }
 
-  function selectBrand(brand) {
-    setActiveFilter('brand')
-    setFilterValue(brand)
-    setFilterLabel(`${store.menu?.brandsLabel || 'Marcas'} > ${brand}`)
+  function chooseBrand(brand) {
+    setActiveSection(null)
+    setSelectedBrand(brand)
     setOpenMenu(false)
   }
+  function clearBrand() { setSelectedBrand(null) }
 
-  function selectCategory(cat) {
-    setActiveFilter('category')
-    setFilterValue(cat)
-    setFilterLabel(`${store.menu?.categoriesLabel || 'Peças'} > ${cat}`)
+  function chooseCategory(cat) {
+    setActiveSection(null)
+    setSelectedCategory(cat)
     setOpenMenu(false)
   }
+  function clearCategory() { setSelectedCategory(null) }
 
-  function clearFilter() {
-    setActiveFilter(null)
-    setFilterValue(null)
-    setFilterLabel('')
+  function chooseSize(size) {
+    setSelectedSizeFilter(size)
+    const params = new URLSearchParams(searchParams)
+    params.set('size', size)
+    setSearchParams(params)
   }
+  function clearSize() {
+    setSelectedSizeFilter(null)
+    const params = new URLSearchParams(searchParams)
+    params.delete('size')
+    setSearchParams(params)
+  }
+
+  function clearAllFilters() {
+    setActiveSection(null)
+    setSelectedBrand(null)
+    setSelectedCategory(null)
+    setSelectedSizeFilter(null)
+    const params = new URLSearchParams(searchParams)
+    params.delete('size')
+    params.delete('section')
+    setSearchParams(params)
+  }
+
+  function getTitle() {
+    if (activeSection) return sectionLabels[activeSection]
+    const parts = [selectedBrand, selectedCategory].filter(Boolean)
+    return parts.length ? parts.join(' · ') : 'Todos os produtos'
+  }
+
+  const hasActiveFilters = Boolean(activeSection || selectedBrand || selectedCategory || selectedSizeFilter)
 
   if (storeLoading || !store) return <LoadingScreen store={store} storeSlug={storeSlug} />
 
@@ -300,10 +450,10 @@ function Products() {
           da paginação. Ver observação no chat sobre isso. */}
       <SearchPanel openSearch={openSearch} searchTerm={searchTerm} setSearchTerm={setSearchTerm}
         products={filteredProducts} setFilteredProducts={setFilteredProducts}
-        setActiveFilter={setActiveFilter} setFilterLabel={setFilterLabel} />
+        setActiveFilter={setActiveSection} setFilterLabel={() => {}} />
 
       <main className="container products-page fade-in">
-        <h2 className="section-title">{activeFilter ? filterLabel : 'Todos os produtos'}</h2>
+        <h2 className="section-title">{getTitle()}</h2>
 
         <button
           className="filter-toggle-button"
@@ -316,39 +466,48 @@ function Products() {
             : <><span style={{ fontSize: '16px', lineHeight: 1 }}>⇅</span> Filtrar</>}
         </button>
 
-        {!activeFilter && openFilters && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', opacity: 0.6, marginRight: '4px' }}>Tamanho:</span>
-            {facetsLoading && <span style={{ fontSize: '13px', opacity: 0.5 }}>Carregando...</span>}
-            {allSizes.map((size) => (
-              <button key={size}
-                onClick={() => {
-                  const newSize = selectedSizeFilter === size ? null : size
-                  setSelectedSizeFilter(newSize)
-                  const params = new URLSearchParams(searchParams)
-                  if (newSize) params.set('size', newSize)
-                  else params.delete('size')
-                  setSearchParams(params)
-                }}
-                style={{ padding: '6px 14px', borderRadius: '20px',
-                  border: '1px solid var(--color-primary, #111)',
-                  background: selectedSizeFilter === size ? 'var(--color-primary, #111)' : 'transparent',
-                  color: selectedSizeFilter === size ? '#fff' : 'var(--color-primary, #111)',
-                  fontSize: '13px', cursor: 'pointer',
-                  fontWeight: selectedSizeFilter === size ? '600' : '400', transition: 'all 0.2s' }}>
-                {size}
-              </button>
+        {openFilters && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', margin: '16px 0 20px',
+            background: '#fff', borderRadius: '16px', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+
+            {facetsLoading && <span style={{ fontSize: '13px', opacity: 0.5 }}>Carregando filtros...</span>}
+
+            {!activeSection && store.menu?.showBrands && (
+              <FilterSelect
+                label={store.menu?.brandsLabel || 'Marca'}
+                value={selectedBrand}
+                options={brands}
+                onSelect={chooseBrand}
+                onClear={clearBrand}
+              />
+            )}
+
+            {!activeSection && store.menu?.showCategories !== false && (
+              <FilterSelect
+                label={store.menu?.categoriesLabel || 'Categoria'}
+                value={selectedCategory}
+                options={categories}
+                onSelect={chooseCategory}
+                onClear={clearCategory}
+              />
+            )}
+
+            {SIZE_TYPE_ORDER.map((type) => (
+              <FilterSelect
+                key={type}
+                label={SIZE_TYPE_LABELS[type]}
+                value={sizesByType[type]?.includes(selectedSizeFilter) ? selectedSizeFilter : null}
+                options={sizesByType[type]}
+                onSelect={chooseSize}
+                onClear={clearSize}
+              />
             ))}
-            {selectedSizeFilter && (
-              <button onClick={() => {
-                  setSelectedSizeFilter(null)
-                  const params = new URLSearchParams(searchParams)
-                  params.delete('size')
-                  setSearchParams(params)
-                }}
-                style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #ccc',
+
+            {hasActiveFilters && (
+              <button onClick={clearAllFilters}
+                style={{ alignSelf: 'flex-start', padding: '6px 12px', borderRadius: '20px', border: '1px solid #ccc',
                   background: 'transparent', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
-                ✕ Limpar
+                ✕ Limpar filtros
               </button>
             )}
           </div>
@@ -396,20 +555,18 @@ function Products() {
                     </div>
                   </div>
 
-                  {activeFilter !== 'search' && (
-                    <button
-                      className={`add-cart-button ${addedId === product.id ? 'added' : ''}`}
-                      disabled={!canAdd}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (!canAdd) return
-                        setSelectedProduct(product)
-                        setSelectedSize('')
-                      }}
-                    >
-                      {!canAdd ? 'Indisponível' : addedId === product.id ? '✔ Adicionado' : '+ Carrinho'}
-                    </button>
-                  )}
+                  <button
+                    className={`add-cart-button ${addedId === product.id ? 'added' : ''}`}
+                    disabled={!canAdd}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (!canAdd) return
+                      setSelectedProduct(product)
+                      setSelectedSize('')
+                    }}
+                  >
+                    {!canAdd ? 'Indisponível' : addedId === product.id ? '✔ Adicionado' : '+ Carrinho'}
+                  </button>
                 </article>
               )
             })
@@ -481,7 +638,7 @@ function Products() {
         <button className="close-menu" onClick={() => setOpenMenu(false)}>✕</button>
         <nav className="menu-list">
           <button className="menu-link" onClick={() => { navigate(storePrefix); setOpenMenu(false) }}>Home</button>
-          <button className="menu-link" onClick={() => { clearFilter(); setOpenMenu(false) }}>Todos os produtos</button>
+          <button className="menu-link" onClick={() => { clearAllFilters(); setOpenMenu(false) }}>Todos os produtos</button>
           <button className="menu-link" onClick={() => selectSection('launch')}>Lançamentos</button>
           <button className="menu-link" onClick={() => selectSection('bestseller')}>Mais vendidos</button>
           <button className="menu-link" onClick={() => selectSection('outlet')}>Outlet</button>
@@ -495,7 +652,7 @@ function Products() {
                 <div className="submenu">
                   {facetsLoading && <span style={{ fontSize: '13px', opacity: 0.5, padding: '4px 12px' }}>Carregando...</span>}
                   {brands.map((brand) => (
-                    <button key={brand} onClick={() => selectBrand(brand)}>{brand}</button>
+                    <button key={brand} onClick={() => chooseBrand(brand)}>{brand}</button>
                   ))}
                 </div>
               )}
@@ -511,7 +668,7 @@ function Products() {
                 <div className="submenu">
                   {facetsLoading && <span style={{ fontSize: '13px', opacity: 0.5, padding: '4px 12px' }}>Carregando...</span>}
                   {categories.map((cat) => (
-                    <button key={cat} onClick={() => selectCategory(cat)}>{cat}</button>
+                    <button key={cat} onClick={() => chooseCategory(cat)}>{cat}</button>
                   ))}
                 </div>
               )}
