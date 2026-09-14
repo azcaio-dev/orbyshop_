@@ -1,6 +1,8 @@
 const CUSTOM_DOMAINS = {
   'calcarbem.app.br': 'calcarbem',
   'www.calcarbem.app.br': 'calcarbem',
+  'aumarikids.com.br': 'aumarikids',
+  'www.aumarikids.com.br': 'aumarikids',
 }
 
 export function getStoreSlugFromDomain() {
