@@ -7478,3 +7478,109 @@ button:hover {
   flex: 1;
   overflow: hidden;
 }
+
+/* ─── WHATSAPP FLOAT ─────────────────────────────────────────────── */
+
+/* Desktop: botão fixo no canto, sempre visível */
+.wa-float-desktop {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #25d366;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  z-index: 500;
+  transition: transform 0.15s ease;
+}
+
+.wa-float-desktop:hover {
+  transform: scale(1.06);
+}
+
+.wa-float-desktop img {
+  width: 28px;
+  height: 28px;
+}
+
+/* Mobile: gotinha lateral que expande */
+.wa-drop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .wa-float-desktop {
+    display: none;
+  }
+
+  .wa-drop {
+    display: block;
+    position: fixed;
+    bottom: 90px;
+    right: 0;
+    z-index: 500;
+  }
+
+  .wa-drop-tab {
+    background: #25d366;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 22px 0 0 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    padding: 0;
+    /* metade "escondida" pra dentro da tela, parecendo uma gotinha saindo da borda */
+    transform: translateX(10px);
+    transition: transform 0.2s ease;
+  }
+
+  .wa-drop-tab:active {
+    transform: translateX(10px) scale(0.94);
+  }
+
+  .wa-drop-tab img {
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+  }
+
+  .wa-drop-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #25d366;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 10px 16px 10px 14px;
+    border-radius: 24px 0 0 24px;
+    box-shadow: -2px 2px 14px rgba(0, 0, 0, 0.25);
+    animation: wa-drop-open 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .wa-drop-button img {
+    width: 22px;
+    height: 22px;
+  }
+
+  @keyframes wa-drop-open {
+    from {
+      transform: translateX(40px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+}

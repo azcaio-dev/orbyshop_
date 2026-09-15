@@ -16,6 +16,7 @@ import ReviewsCarousel from '../components/ReviewsCarousel'
 import LoadingScreen from '../components/LoadingScreen'
 import { otimizarImagem } from '../utils/otimizarImagem'
 import { useVisitTracker } from '../hooks/useVisitTracker'
+import WhatsAppFloat from '../components/WhatsAppFloat'
 
 // ✅ Formata a forma de pagamento pra exibição
 function formatPaymentMethod(paymentMethod) {
@@ -269,6 +270,8 @@ const storePrefix = `/${storeSlug}`
 
   return (
     <div>
+      <WhatsAppFloat store={store} />
+
       <header className={`header ${scrolled ? 'scrolled' : ''}`}>
         <div className="header-left">
           <button className="menu-button" onClick={() => setOpenMenu(true)}>
