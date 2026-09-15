@@ -4,6 +4,7 @@ import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore'
 import { auth, db } from '../services/firebase'
 import AdminLayout from '../layouts/AdminLayout'
+import VisitsCard from '../components/admin/VisitsCard'
 
 function AdminDashboard() {
   const navigate = useNavigate()
@@ -232,6 +233,8 @@ function AdminDashboard() {
               </div>
             )}
           </div>
+
+          <VisitsCard storeId={storeSlug} />
         </div>
 
         {/* Ações rápidas */}

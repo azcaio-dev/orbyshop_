@@ -15,6 +15,7 @@ import SobreNos from '../components/SobreNos'
 import ReviewsCarousel from '../components/ReviewsCarousel'
 import LoadingScreen from '../components/LoadingScreen'
 import { otimizarImagem } from '../utils/otimizarImagem'
+import { useVisitTracker } from '../hooks/useVisitTracker'
 
 // ✅ Formata a forma de pagamento pra exibição
 function formatPaymentMethod(paymentMethod) {
@@ -29,6 +30,7 @@ function Home() {
 
 const storePrefix = `/${storeSlug}`
   useStoreTheme(store)
+  useVisitTracker(storeSlug)
 
   const trustBadges = [
     { icon: '/escudo.png', label: 'Compra segura', desc: 'Seus dados protegidos' },
