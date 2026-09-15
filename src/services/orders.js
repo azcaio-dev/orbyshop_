@@ -18,7 +18,7 @@ function parsePrice(value) {
  * a URL pública do resumo do pedido, já respeitando domínio customizado.
  */
 export async function createOrderSnapshot(storeSlug, cart, total) {
-  const orderRef = await addDoc(collection(db, 'stores', storeSlug, 'orders'), {
+  const orderData = {
     createdAt: serverTimestamp(),
     total,
     items: cart.map((item) => ({
@@ -30,7 +30,15 @@ export async function createOrderSnapshot(storeSlug, cart, total) {
       quantity: item.quantity,
       imageUrl: item.image || null,
     })),
-  })
+  }
+
+  // TODO: log temporário para diagnosticar por que a gravação falha em
+  // algumas lojas e não em outras.
+  console.log('[createOrderSnapshot] storeSlug:', storeSlug)
+  console.log('[createOrderSnapshot] total:', total, typeof total)
+  console.log('[createOrderSnapshot] items:', JSON.stringify(orderData.items, null, 2))
+
+  const orderRef = await addDoc(collection(db, 'stores', storeSlug, 'orders'), orderData)
 
   const customDomain = getCustomDomainFromSlug(storeSlug)
   const baseUrl = customDomain
