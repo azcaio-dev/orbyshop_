@@ -153,9 +153,12 @@ Pode me ajudar com o pagamento e entrega?`
 
       const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappText)}`
       window.location.href = whatsappLink
-    } catch {
+    } catch (err) {
       // Se salvar o pedido falhar (ex: sem internet), não trava o cliente:
       // manda a mensagem sem o link, do jeito que já funcionava antes.
+      // TODO: log temporário para diagnosticar por que só algumas lojas falham.
+      console.error('Falha ao criar snapshot do pedido:', err)
+
       const whatsappText = `${store.checkout?.messageIntro || 'Olá! Quero finalizar meu pedido:'}
 
 *Itens:*
