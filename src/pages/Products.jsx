@@ -162,6 +162,7 @@ function Products() {
   const [searchParams, setSearchParams] = useSearchParams()
   const section = searchParams.get('section')
   const sizeParam = searchParams.get('size')
+  const genderParam = searchParams.get('genero')
 
   const { store, loading: storeLoading, storeSlug } = useStore()
   const storePrefix = `/${storeSlug}`
@@ -198,6 +199,7 @@ function Products() {
   const [openSearch, setOpenSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSizeFilter, setSelectedSizeFilter] = useState(sizeParam || null)
+  const [selectedGender, setSelectedGender] = useState(genderParam || null)
   const [openFilters, setOpenFilters] = useState(false)
 
   // Facetas (marcas, categorias, tamanhos) — buscadas sob demanda, uma vez só,
@@ -248,21 +250,30 @@ function Products() {
     setSelectedSizeFilter(sizeParam || null)
   }, [sizeParam])
 
+  useEffect(() => {
+    setSelectedGender(genderParam || null)
+  }, [genderParam])
+
   // ---------------------------------------------------------------------
   // Busca paginada real: monta a query de acordo com os filtros ativos e
   // pede só um lote (PAGE_SIZE) por vez, usando startAfter pra continuar
   // de onde parou. Nunca busca o catálogo inteiro.
   //
-  // Marca + categoria agora podem ser combinadas. Isso exige índices
+  // Marca + categoria + sexo agora podem ser combinados. Isso exige índices
   // compostos extras no Firestore (um pra cada combinação usada):
-  //   - available(desc), category, name                        [sem filtro]
-  //   - brand(==), available(desc), category, name              [só marca]
-  //   - category(==), available(desc), name                     [só categoria]
-  //   - brand(==), category(==), available(desc), name           [marca+categoria]
-  //   - productSection(==), available(desc), category, name     [seção]
+  //   - available(desc), category, name                                  [sem filtro]
+  //   - brand(==), available(desc), category, name                       [só marca]
+  //   - category(==), available(desc), name                              [só categoria]
+  //   - brand(==), category(==), available(desc), name                    [marca+categoria]
+  //   - gender(==), available(desc), category, name                      [só sexo]
+  //   - gender(==), brand(==), available(desc), category, name            [sexo+marca]
+  //   - gender(==), category(==), available(desc), name                   [sexo+categoria]
+  //   - gender(==), brand(==), category(==), available(desc), name         [sexo+marca+categoria]
+  //   - productSection(==), available(desc), category, name              [seção]
   // Se faltar algum, o Firestore retorna um erro no console com um link
   // direto pra criar o índice — é só clicar (mesmo fluxo já usado antes
-  // pra loja Labany).
+  // pra loja Labany). Vá testando cada combinação de filtro pra ir criando
+  // os índices que faltarem.
   // ---------------------------------------------------------------------
   const buildQuery = useCallback((startAfterDoc) => {
     const baseRef = collection(db, 'stores', storeSlug, 'products')
@@ -272,6 +283,7 @@ function Products() {
       constraints.push(where('productSection', '==', activeSection))
       constraints.push(orderBy('available', 'desc'), orderBy('category'), orderBy('name'))
     } else {
+      if (selectedGender) constraints.push(where('gender', '==', selectedGender))
       if (selectedBrand) constraints.push(where('brand', '==', selectedBrand))
       if (selectedCategory) constraints.push(where('category', '==', selectedCategory))
 
@@ -285,7 +297,7 @@ function Products() {
     constraints.push(limit(PAGE_SIZE))
 
     return query(baseRef, ...constraints)
-  }, [storeSlug, activeSection, selectedBrand, selectedCategory, PAGE_SIZE])
+  }, [storeSlug, activeSection, selectedBrand, selectedCategory, selectedGender, PAGE_SIZE])
 
   const loadPage = useCallback(async (reset = false) => {
     try {
@@ -314,11 +326,11 @@ function Products() {
     }
   }, [buildQuery, lastDoc, PAGE_SIZE])
 
-  // Reseta e recarrega sempre que algum filtro mudar (seção, marca, categoria)
+  // Reseta e recarrega sempre que algum filtro mudar (seção, marca, categoria, sexo)
   useEffect(() => {
     loadPage(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeSlug, activeSection, selectedBrand, selectedCategory])
+  }, [storeSlug, activeSection, selectedBrand, selectedCategory, selectedGender])
 
   // ---------------------------------------------------------------------
   // Facetas (marcas / categorias / tamanhos) sob demanda.
@@ -396,14 +408,29 @@ function Products() {
     setSearchParams(params)
   }
 
+  function chooseGender(gender) {
+    setSelectedGender(gender)
+    const params = new URLSearchParams(searchParams)
+    params.set('genero', gender)
+    setSearchParams(params)
+  }
+  function clearGender() {
+    setSelectedGender(null)
+    const params = new URLSearchParams(searchParams)
+    params.delete('genero')
+    setSearchParams(params)
+  }
+
   function clearAllFilters() {
     setActiveSection(null)
     setSelectedBrand(null)
     setSelectedCategory(null)
     setSelectedSizeFilter(null)
+    setSelectedGender(null)
     const params = new URLSearchParams(searchParams)
     params.delete('size')
     params.delete('section')
+    params.delete('genero')
     setSearchParams(params)
   }
 
@@ -413,7 +440,7 @@ function Products() {
     return parts.length ? parts.join(' · ') : 'Todos os produtos'
   }
 
-  const hasActiveFilters = Boolean(activeSection || selectedBrand || selectedCategory || selectedSizeFilter)
+  const hasActiveFilters = Boolean(activeSection || selectedBrand || selectedCategory || selectedSizeFilter || selectedGender)
 
   if (storeLoading || !store) return <LoadingScreen store={store} storeSlug={storeSlug} />
 
@@ -431,7 +458,8 @@ function Products() {
     )
   }
 
-  // Filtro de tamanho aplicado só sobre o lote já carregado (não sobre o catálogo inteiro).
+  // Filtro de tamanho aplicado só sobre o lote já carregado (não sobre o catálogo
+  // inteiro) — o de sexo já vem filtrado direto do Firestore (buildQuery acima).
   // Se o cliente filtrar por tamanho e a página atual tiver poucos resultados,
   // "Ver mais" ainda busca mais produtos do Firestore normalmente.
   const displayed = selectedSizeFilter
@@ -510,6 +538,16 @@ function Products() {
                 options={categories}
                 onSelect={chooseCategory}
                 onClear={clearCategory}
+              />
+            )}
+
+            {!activeSection && (
+              <FilterSelect
+                label="Sexo"
+                value={selectedGender ? selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1) : null}
+                options={['Feminino', 'Masculino', 'Unissex']}
+                onSelect={(label) => chooseGender(label.toLowerCase())}
+                onClear={clearGender}
               />
             )}
 

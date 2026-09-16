@@ -33,6 +33,7 @@ function AdminProducts() {
   const [costPrice, setCostPrice] = useState('')
   const [sizeStocks, setSizeStocks] = useState({})
   const [soEncomenda, setSoEncomenda] = useState(false)
+  const [gender, setGender] = useState('')
   const [variationSizeStocks, setVariationSizeStocks] = useState({})
   const [showVariationForm, setShowVariationForm] = useState(false)
   const [variationColorName, setVariationColorName] = useState('')
@@ -187,7 +188,7 @@ function AdminProducts() {
     const restoredSizeType = getLastSizeType()
     setName(''); setOldPrice(''); setPrice(''); setPaymentMethod('vista'); setPixPrice(''); setDescription(''); setMainColor('')
     setProductImages([null]); setEditingId(null); setBrand(''); setCategory('')
-    setProductSection(''); setSizeType(restoredSizeType); setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : []); setCostPrice(''); setSizeStocks({}); setSoEncomenda(false); setShowVariationForm(false); setVariationColorName('')
+    setProductSection(''); setSizeType(restoredSizeType); setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : []); setCostPrice(''); setSizeStocks({}); setSoEncomenda(false); setGender(''); setShowVariationForm(false); setVariationColorName('')
     setVariationFile(null); setVariationSizeType('letter'); setVariationSizes([])
     setVariationSizeStocks({}); setVariations([])
     // Se só existe 1 perfil de envio, já deixa ele pré-selecionado; senão, limpa
@@ -199,7 +200,7 @@ function AdminProducts() {
     setPrice(product.price || ''); setPaymentMethod(product.paymentMethod || 'vista'); setPixPrice(product.pixPrice ?? ''); setDescription(product.description || ''); setMainColor(product.mainColor || '')
     setBrand(product.brand || ''); setCategory(product.category || ''); setProductSection(product.productSection || '')
     setSizeType(product.sizeType || 'letter'); setSizes(product.sizes || []); setCostPrice(product.costPrice || '')
-    setSizeStocks(product.sizeStocks || {}); setSoEncomenda(product.soEncomenda === true); setVariations(product.variations || [])
+    setSizeStocks(product.sizeStocks || {}); setSoEncomenda(product.soEncomenda === true); setGender(product.gender || ''); setVariations(product.variations || [])
     setShowVariationForm(false); setVariationColorName(''); setVariationFile(null)
     setVariationSizeType('letter'); setVariationSizes([]); setVariationSizeStocks({}); setProductImages([null])
     setPerfilEnvioId(product.perfilEnvioId || (freteAtivo && perfisEnvio.length === 1 ? perfisEnvio[0].id : ''))
@@ -230,7 +231,7 @@ function AdminProducts() {
         const updatedData = { name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod,
           pixPrice: pixPrice ? Number(pixPrice) : null,
           description, mainColor, brand, category, productSection, sizeType, sizes, variations,
-          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, soEncomenda,
+          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, soEncomenda, gender,
           stock: calculateTotalStock(), available: calculateTotalStock() > 0 || soEncomenda,
           perfilEnvioId: perfilParaSalvar }
         const validImages = productImages.filter(Boolean)
@@ -246,7 +247,7 @@ function AdminProducts() {
           pixPrice: pixPrice ? Number(pixPrice) : null,
           description, mainColor,
           brand, category, productSection, sizeType, sizes, images: uploadedImages, variations,
-          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, soEncomenda,
+          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, soEncomenda, gender,
           stock: calculateTotalStock(), available: calculateTotalStock() > 0 || soEncomenda,
           perfilEnvioId: perfilParaSalvar,
         })
@@ -330,6 +331,13 @@ function AdminProducts() {
                   <datalist id="category-options">{categories.map((item) => <option key={item} value={item} />)}</datalist>
                 </>
               )}
+
+              <select value={gender} onChange={(e) => setGender(e.target.value)}>
+                <option value="">Sexo (não especificado)</option>
+                <option value="feminino">Feminino</option>
+                <option value="masculino">Masculino</option>
+                <option value="unissex">Unissex</option>
+              </select>
             </div>
 
             <select value={sizeType} onChange={(e) => handleSizeTypeChange(e.target.value)}>
