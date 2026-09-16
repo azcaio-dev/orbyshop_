@@ -7584,3 +7584,75 @@ button:hover {
     }
   }
 }
+
+
+/* ─── SOB ENCOMENDA ─────────────────────────────────────────────── */
+
+/* Badge no card do produto (vitrine) — "flag" saindo da borda esquerda,
+   sobreposto na foto perto da base, sem ocupar espaço no layout do card */
+.sob-encomenda-badge {
+  position: absolute;
+  bottom: 10%;
+  left: 0;
+  background: var(--color-primary);
+  color: var(--color-white);
+  opacity: 0.5;
+  font-weight: 700;
+  font-size: 9px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 0 20px 20px 0;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+/* Aviso na página do produto */
+.sob-encomenda-notice {
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+/* Tag pequena (admin: lista de produtos / carrinho) */
+.sob-encomenda-tag {
+  display: inline-block;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+/* Campo de checkbox no formulário de cadastro de produto */
+.orby-checkbox-field label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  margin-top: 0;
+}
+
+.orby-checkbox-field input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+  margin: 0;
+  border-radius: 4px;
+  border: 1px solid #DAD8F7;
+  background: #fff;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #7F77DD;
+}

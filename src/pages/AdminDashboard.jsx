@@ -123,7 +123,7 @@ function AdminDashboard() {
           dailySales: todaySales.length,
           monthlyRevenue: sum(monthSales, 'total'),
           monthlyProfit: sum(monthSales, 'profit'),
-          outOfStock: products.filter((p) => (p.stock ?? 0) <= 0).length,
+          outOfStock: products.filter((p) => (p.stock ?? 0) <= 0 && !p.soEncomenda).length,
           recentSales: sortedSales.slice(0, 10),
         })
       } catch (error) {

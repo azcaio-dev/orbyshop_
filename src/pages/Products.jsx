@@ -36,13 +36,32 @@ function hasAnyStock(product) {
   const variationStock = (product.variations || []).some((variation) =>
     Object.values(variation.sizeStocks || {}).some((v) => Number(v) > 0)
   )
-  return mainStock || variationStock
+  if (mainStock || variationStock) return true
+  // Sob encomenda: mesmo com estoque zerado em todos os tamanhos, o produto
+  // continua disponível pro cliente comprar (vai ser produzido/reposto).
+  return product.soEncomenda === true
+}
+
+// Verdadeiro quando o produto está com estoque total zerado mas disponível
+// via "sob encomenda" — usado pra trocar o badge na vitrine
+function isSoEncomendaActive(product) {
+  if (!product.soEncomenda) return false
+  const mainStock = Object.values(product.sizeStocks || {}).some((v) => Number(v) > 0)
+  const variationStock = (product.variations || []).some((variation) =>
+    Object.values(variation.sizeStocks || {}).some((v) => Number(v) > 0)
+  )
+  return !mainStock && !variationStock
 }
 
 // Retorna os tamanhos com estoque > 0 para um produto (na variação principal)
 function getSizesWithStock(product) {
   const sizes = product.sizes || []
   if (!product.sizeStocks) return sizes
+  // Sob encomenda com estoque total zerado: libera todos os tamanhos, já que
+  // o produto vai ser produzido/reposto sob demanda.
+  if (product.soEncomenda && !Object.values(product.sizeStocks).some((v) => Number(v) > 0)) {
+    return sizes
+  }
   return sizes.filter((size) => Number(product.sizeStocks[size] || 0) > 0)
 }
 
@@ -419,6 +438,8 @@ function Products() {
     ? filteredProducts.filter((p) => {
         if (!p.sizes?.includes(selectedSizeFilter)) return false
         if (!p.sizeStocks || Object.keys(p.sizeStocks).length === 0) return p.available
+        const hasRealStock = Object.values(p.sizeStocks).some((v) => Number(v) > 0)
+        if (!hasRealStock && p.soEncomenda) return true
         return Number(p.sizeStocks[selectedSizeFilter] || 0) > 0
       })
     : filteredProducts
@@ -529,6 +550,9 @@ function Products() {
                   <div className="product-image-wrapper" style={{ position: 'relative' }}>
                     <img src={product.images?.[0] || product.image} alt={product.name} className="product-image" loading="lazy" />
                     {!canAdd && <span className="unavailable-badge">Indisponível</span>}
+                    {canAdd && isSoEncomendaActive(product) && (
+                      <span className="sob-encomenda-badge">Sob encomenda</span>
+                    )}
                     {product.productSection === 'outlet' && product.oldPrice && (
                       <span className="discount-badge">
                         {Math.round((1 - product.price / product.oldPrice) * 100)}%

@@ -124,7 +124,7 @@ function CartDrawer({ open, onClose }) {
     const price = formatPrice(item.price)
     return `• ${item.quantity}x ${item.name}
 ${item.selectedColor ? `Cor: ${item.selectedColor}\n` : ''}Tam: ${item.selectedSize || '-'}
-Preço: ${fmt(price)}`
+Preço: ${fmt(price)}${item.soEncomenda ? '\n📦 Sob encomenda' : ''}`
   }).join('\n\n')
 
   // ✅ Usa o número do vendedor se disponível, senão usa o da loja
@@ -195,6 +195,7 @@ Pode me ajudar com o pagamento e entrega?`
               <img src={item.image} alt={item.name} className="cart-item-image" loading="lazy" />
               <div className="cart-info">
                 <strong className="cart-product-name">{item.name}</strong>
+                {item.soEncomenda && <span className="sob-encomenda-tag">📦 Sob encomenda</span>}
                 <div className="cart-middle-row">
                   <div>
                     {item.selectedColor && <span>Cor: {item.selectedColor}</span>}

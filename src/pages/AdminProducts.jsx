@@ -32,6 +32,7 @@ function AdminProducts() {
   const [sizes, setSizes] = useState([])
   const [costPrice, setCostPrice] = useState('')
   const [sizeStocks, setSizeStocks] = useState({})
+  const [soEncomenda, setSoEncomenda] = useState(false)
   const [variationSizeStocks, setVariationSizeStocks] = useState({})
   const [showVariationForm, setShowVariationForm] = useState(false)
   const [variationColorName, setVariationColorName] = useState('')
@@ -186,7 +187,7 @@ function AdminProducts() {
     const restoredSizeType = getLastSizeType()
     setName(''); setOldPrice(''); setPrice(''); setPaymentMethod('vista'); setPixPrice(''); setDescription(''); setMainColor('')
     setProductImages([null]); setEditingId(null); setBrand(''); setCategory('')
-    setProductSection(''); setSizeType(restoredSizeType); setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : []); setCostPrice(''); setSizeStocks({}); setShowVariationForm(false); setVariationColorName('')
+    setProductSection(''); setSizeType(restoredSizeType); setSizes(restoredSizeType === 'unique' ? ['Tamanho único'] : []); setCostPrice(''); setSizeStocks({}); setSoEncomenda(false); setShowVariationForm(false); setVariationColorName('')
     setVariationFile(null); setVariationSizeType('letter'); setVariationSizes([])
     setVariationSizeStocks({}); setVariations([])
     // Se só existe 1 perfil de envio, já deixa ele pré-selecionado; senão, limpa
@@ -198,7 +199,7 @@ function AdminProducts() {
     setPrice(product.price || ''); setPaymentMethod(product.paymentMethod || 'vista'); setPixPrice(product.pixPrice ?? ''); setDescription(product.description || ''); setMainColor(product.mainColor || '')
     setBrand(product.brand || ''); setCategory(product.category || ''); setProductSection(product.productSection || '')
     setSizeType(product.sizeType || 'letter'); setSizes(product.sizes || []); setCostPrice(product.costPrice || '')
-    setSizeStocks(product.sizeStocks || {}); setVariations(product.variations || [])
+    setSizeStocks(product.sizeStocks || {}); setSoEncomenda(product.soEncomenda === true); setVariations(product.variations || [])
     setShowVariationForm(false); setVariationColorName(''); setVariationFile(null)
     setVariationSizeType('letter'); setVariationSizes([]); setVariationSizeStocks({}); setProductImages([null])
     setPerfilEnvioId(product.perfilEnvioId || (freteAtivo && perfisEnvio.length === 1 ? perfisEnvio[0].id : ''))
@@ -229,7 +230,8 @@ function AdminProducts() {
         const updatedData = { name, oldPrice: oldPrice ? Number(oldPrice) : null, price: Number(price), paymentMethod,
           pixPrice: pixPrice ? Number(pixPrice) : null,
           description, mainColor, brand, category, productSection, sizeType, sizes, variations,
-          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0,
+          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, soEncomenda,
+          stock: calculateTotalStock(), available: calculateTotalStock() > 0 || soEncomenda,
           perfilEnvioId: perfilParaSalvar }
         const validImages = productImages.filter(Boolean)
         if (validImages.length > 0) updatedData.images = await Promise.all(validImages.map((f) => uploadImage(f)))
@@ -244,7 +246,8 @@ function AdminProducts() {
           pixPrice: pixPrice ? Number(pixPrice) : null,
           description, mainColor,
           brand, category, productSection, sizeType, sizes, images: uploadedImages, variations,
-          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, stock: calculateTotalStock(), available: calculateTotalStock() > 0,
+          costPrice: costPrice ? Number(costPrice) : null, sizeStocks, soEncomenda,
+          stock: calculateTotalStock(), available: calculateTotalStock() > 0 || soEncomenda,
           perfilEnvioId: perfilParaSalvar,
         })
         showToast('Produto cadastrado com sucesso!', 'success')
@@ -352,6 +355,20 @@ function AdminProducts() {
                     <input type="number" min="0" value={sizeStocks[size] || ''} onChange={(e) => updateSizeStock(size, e.target.value)} placeholder="Quantidade" />
                   </div>
                 ))}
+              </div>
+            )}
+
+            {isPro && (
+              <div className="orby-field orby-checkbox-field">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={soEncomenda}
+                    onChange={(e) => setSoEncomenda(e.target.checked)}
+                  />
+                  Vender sob encomenda quando esgotar
+                </label>
+                <span className="field-hint">Volta ao normal sozinho quando repor estoque.</span>
               </div>
             )}
 
@@ -481,6 +498,9 @@ function AdminProducts() {
                     {product.category && <p>Categorias: {product.category}</p>}
                     <p>{product.available ? 'Disponível' : 'Indisponível'}</p>
                     {isPro && <p>Estoque: {product.stock ?? 0}</p>}
+                    {isPro && (product.stock ?? 0) <= 0 && product.soEncomenda && (
+                      <p className="sob-encomenda-tag">Sob encomenda</p>
+                    )}
                   </div>
                   <div className="admin-actions">
                     <button onClick={() => handleEdit(product)}>Editar</button>

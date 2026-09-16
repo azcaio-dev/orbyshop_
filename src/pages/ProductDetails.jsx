@@ -16,13 +16,32 @@ function getSizesWithStock(product, variation) {
   const sizes = variation?.sizes || product.sizes || []
   const sizeStocks = variation?.sizeStocks || product.sizeStocks
   if (!sizeStocks || Object.keys(sizeStocks).length === 0) return sizes
+  // Sob encomenda com estoque total zerado: libera todos os tamanhos, já que
+  // o produto vai ser produzido/reposto sob demanda.
+  if (product.soEncomenda && !Object.values(sizeStocks).some((v) => Number(v) > 0)) {
+    return sizes
+  }
   return sizes.filter((size) => Number(sizeStocks[size] || 0) > 0)
 }
 
 function sizeHasStock(product, variation, size) {
   const sizeStocks = variation?.sizeStocks || product.sizeStocks
   if (!sizeStocks || Object.keys(sizeStocks).length === 0) return true
+  if (product.soEncomenda && !Object.values(sizeStocks).some((v) => Number(v) > 0)) {
+    return true
+  }
   return Number(sizeStocks[size] || 0) > 0
+}
+
+// Verdadeiro quando o produto está com estoque total zerado mas disponível
+// via "sob encomenda" — usado pra mostrar o aviso na página do produto
+function isSoEncomendaActive(product) {
+  if (!product.soEncomenda) return false
+  const mainStock = Object.values(product.sizeStocks || {}).some((v) => Number(v) > 0)
+  const variationStock = (product.variations || []).some((variation) =>
+    Object.values(variation.sizeStocks || {}).some((v) => Number(v) > 0)
+  )
+  return !mainStock && !variationStock
 }
 
 // ✅ Formata a forma de pagamento pra exibição (fallback quando não há PIX nem parcelamento configurados)
@@ -189,11 +208,12 @@ function ProductDetails() {
       selectedColor,
       price: product.price,
       quantity: 1,
+      soEncomenda: isSoEncomendaActive(product),
     }
 
     const detalhes = `Produto: ${product.name}
 ${selectedColor && selectedColor !== '-' ? `Cor: ${selectedColor}\n` : ''}Tamanho: ${selectedSize}
-Preço: ${formattedPrice}`
+Preço: ${formattedPrice}${isSoEncomendaActive(product) ? '\n📦 Sob encomenda' : ''}`
 
     try {
       const orderLink = await createOrderSnapshot(storeSlug, [item], Number(product.price))
@@ -292,6 +312,12 @@ Pode me ajudar?`
             <p>{product.description || 'Sem descrição cadastrada.'}</p>
           </div>
 
+          {isSoEncomendaActive(product) && (
+            <p className="sob-encomenda-notice">
+              📦 Produto sob encomenda — será providenciado após a confirmação do pedido.
+            </p>
+          )}
+
           {(product.mainColor || product.variations?.length > 0) && (
             <div className="product-colors">
               <h3>Cores disponíveis</h3>
@@ -349,6 +375,7 @@ Pode me ajudar?`
                   selectedSize,
                   selectedColor: selectedVariation?.colorName || product.mainColor || '',
                   price: product.price,
+                  soEncomenda: isSoEncomendaActive(product),
                 })
                 setAdded(true)
                 showToast('Produto adicionado ao carrinho', 'success')
