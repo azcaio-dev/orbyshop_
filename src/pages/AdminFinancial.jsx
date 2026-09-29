@@ -8,6 +8,56 @@ import { hasFeature } from '../utils/features'
 
 const DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
+const pad = (n) => String(n).padStart(2, '0')
+const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+const dayLabel = (d) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`
+
+// Monta a série diária usada pelo gráfico e pelos cards de resumo.
+// Sem filtro: últimos 30 dias (hoje incluso). Com filtro: do dia inicial ao final.
+// A média divide pelo total de dias do período, contando também os dias sem venda.
+function buildDaily(sales, startDate, endDate) {
+  const end = endDate ? new Date(`${endDate}T00:00:00`) : new Date()
+  end.setHours(0, 0, 0, 0)
+  const start = startDate ? new Date(`${startDate}T00:00:00`) : new Date(end)
+  if (!startDate) start.setDate(start.getDate() - 29)
+  if (start > end) start.setTime(end.getTime())
+
+  const keys = []
+  const labels = []
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    keys.push(dayKey(d))
+    labels.push(dayLabel(d))
+  }
+
+  const map = {}
+  keys.forEach((k) => { map[k] = 0 })
+  sales.forEach((sale) => {
+    if (!sale.createdAt?.seconds) return
+    const k = dayKey(new Date(sale.createdAt.seconds * 1000))
+    if (k in map) map[k] += Number(sale.total || 0)
+  })
+
+  const values = keys.map((k) => Math.round(map[k] * 100) / 100)
+  const total = values.reduce((a, b) => a + b, 0)
+  const days = keys.length
+  const avg = days > 0 ? total / days : 0
+
+  let bestIdx = -1
+  values.forEach((v, i) => {
+    if (v > 0 && (bestIdx === -1 || v > values[bestIdx])) bestIdx = i
+  })
+
+  return {
+    labels,
+    values,
+    total,
+    avg,
+    days,
+    bestLabel: bestIdx >= 0 ? labels[bestIdx] : '—',
+    rangeLabel: `${labels[0]} – ${labels[labels.length - 1]}`,
+  }
+}
+
 function AdminFinancial() {
   const { store, loading: storeLoading, storeSlug } = useStore()
   const [sales, setSales] = useState([])
@@ -28,7 +78,7 @@ function AdminFinancial() {
           if (!sale.createdAt?.seconds) return true
           const saleDate = new Date(sale.createdAt.seconds * 1000)
           if (startDate && saleDate < new Date(`${startDate}T00:00:00`)) return false
-          if (endDate && saleDate > new Date(`${endDate}T23:59:59`)) return false
+          if (endDate && saleDate > new Date(`${endDate}T23:59:59.999`)) return false
           return true
         })
         setSales(filteredSales)
@@ -42,30 +92,9 @@ function AdminFinancial() {
   useEffect(() => {
     if (!chartRef.current) return
 
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-    const dayMap = {}
-    sales.forEach((sale) => {
-      if (!sale.createdAt?.seconds) return
-      const d = new Date(sale.createdAt.seconds * 1000)
-      if (d < thirtyDaysAgo) return
-      const key = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-      dayMap[key] = (dayMap[key] || 0) + Number(sale.total || 0)
-    })
-
-    // Gera os 30 dias fixos do mais antigo ao mais recente
-    const allDays = []
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date()
-      d.setDate(d.getDate() - i)
-      allDays.push(d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }))
-    }
-
-    const labels = allDays
-    const data = allDays.map(key => Math.round((dayMap[key] || 0) * 100) / 100)
+    const { labels, values: data, avg: rawAvg, days } = buildDaily(sales, startDate, endDate)
     const maxVal = Math.max(...data)
-    const avg = Math.round(data.reduce((a, b) => a + b, 0) / data.length)
+    const avg = Math.round(rawAvg)
 
     if (chartInstance.current) {
       chartInstance.current.destroy()
@@ -76,6 +105,8 @@ function AdminFinancial() {
       if (!window.Chart || !chartRef.current) return
       const containerWidth = chartRef.current.parentElement?.clientWidth || window.innerWidth
       const isNarrow = containerWidth < 420
+      // Em períodos longos, deixa o Chart.js definir a largura das barras
+      const barThickness = days > 45 ? undefined : (isNarrow ? 6 : 18)
       chartInstance.current = new window.Chart(chartRef.current, {
         type: 'bar',
         data: {
@@ -87,7 +118,7 @@ function AdminFinancial() {
               backgroundColor: data.map(v => v > 0 && v === maxVal ? '#534AB7' : '#AFA9EC'),
               borderRadius: 6,
               borderSkipped: false,
-              barThickness: isNarrow ? 6 : 18,
+              barThickness,
               maxBarThickness: isNarrow ? 6 : 18,
             },
             {
@@ -161,7 +192,7 @@ function AdminFinancial() {
         chartInstance.current = null
       }
     }
-  }, [sales])
+  }, [sales, startDate, endDate])
 
   if (storeLoading || !store) return <AdminLayout><div className="dash-loading">Carregando...</div></AdminLayout>
   if (!isPro) return <AdminLayout><UpgradePlan /></AdminLayout>
@@ -232,20 +263,9 @@ function AdminFinancial() {
   })
   const vendorStats = Object.values(vendorMap).sort((a, b) => b.revenue - a.revenue)
 
-  // Dados resumo do gráfico (últimos 30 dias)
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  const dayMap = {}
-  sales.forEach((sale) => {
-    if (!sale.createdAt?.seconds) return
-    const d = new Date(sale.createdAt.seconds * 1000)
-    if (d < thirtyDaysAgo) return
-    const key = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-    dayMap[key] = (dayMap[key] || 0) + Number(sale.total || 0)
-  })
-  const dayValues = Object.values(dayMap)
-  const chartAvg = dayValues.length > 0 ? dayValues.reduce((a, b) => a + b, 0) / dayValues.length : 0
-  const bestDayEntry = Object.entries(dayMap).sort((a, b) => b[1] - a[1])[0]
+  // Resumo do gráfico: mesmo período e mesma série usados pelo gráfico
+  const isFiltered = Boolean(startDate || endDate)
+  const daily = buildDaily(sales, startDate, endDate)
 
   const mainMetrics = [
     { label: 'Faturamento total', value: fmt(totalRevenue), accent: true },
@@ -344,26 +364,23 @@ function AdminFinancial() {
         <div className="dash-sales-section" style={{ marginTop: 24 }}>
           <div className="dash-sales-header">
             <p className="dash-section-title" style={{ marginBottom: 0 }}>Evolução por dia</p>
-            <span className="dash-sales-count">últimos 30 dias</span>
+            <span className="dash-sales-count">{isFiltered ? daily.rangeLabel : 'últimos 30 dias'}</span>
           </div>
 
           <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
             <div style={{ background: '#f6f7fb', borderRadius: 10, padding: '10px 14px', flex: 1 }}>
               <p style={{ fontSize: 11, color: '#6b7280', margin: '0 0 2px' }}>Faturamento no período</p>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: 0 }}>{fmt(sum(sales.filter(s => {
-                if (!s.createdAt?.seconds) return false
-                return new Date(s.createdAt.seconds * 1000) >= thirtyDaysAgo
-              }), 'total'))}</p>
+              <p style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: 0 }}>{fmt(daily.total)}</p>
             </div>
             <div style={{ background: '#f6f7fb', borderRadius: 10, padding: '10px 14px', flex: 1 }}>
               <p style={{ fontSize: 11, color: '#6b7280', margin: '0 0 2px' }}>Melhor dia</p>
               <p style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: 0 }}>
-                {bestDayEntry ? bestDayEntry[0] : '—'}
+                {daily.bestLabel}
               </p>
             </div>
             <div style={{ background: '#f6f7fb', borderRadius: 10, padding: '10px 14px', flex: 1 }}>
               <p style={{ fontSize: 11, color: '#6b7280', margin: '0 0 2px' }}>Média diária</p>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: 0 }}>{fmt(chartAvg)}</p>
+              <p style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: 0 }}>{fmt(daily.avg)}</p>
             </div>
           </div>
 
@@ -386,7 +403,7 @@ function AdminFinancial() {
             <canvas
               ref={chartRef}
               role="img"
-              aria-label="Gráfico de barras mostrando evolução do faturamento nos últimos 30 dias"
+              aria-label={`Gráfico de barras mostrando evolução do faturamento ${isFiltered ? 'no período selecionado' : 'nos últimos 30 dias'}`}
             />
           </div>
         </div>
