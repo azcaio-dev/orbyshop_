@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { otimizarImagem } from "../utils/otimizarImagem";
 
 /**
  * ProductImageZoom
@@ -10,10 +11,17 @@ import { createPortal } from "react-dom";
  * Uso:
  *   <ProductImageZoom src={imagemAtual} alt={produto.nome} />
  *
+ * Recebe a URL ORIGINAL do Cloudinary e otimiza por dentro:
+ *   - 1200px para a foto exibida (e para a lupa do desktop)
+ *   - 2000px só quando o cliente abre o lightbox no celular
+ *
  * Sem dependências externas — só React e CSS puro.
  */
 export default function ProductImageZoom({ src, alt = "" }) {
   const [isMobile, setIsMobile] = useState(false);
+
+  const displaySrc = otimizarImagem(src, 1200, true);
+  const fullSrc = otimizarImagem(src, 2000, true);
 
   useEffect(() => {
     const check = () =>
@@ -27,9 +35,9 @@ export default function ProductImageZoom({ src, alt = "" }) {
     <>
       <div className="piz-frame">
         {isMobile ? (
-          <MobileZoomTrigger src={src} alt={alt} />
+          <MobileZoomTrigger src={displaySrc} fullSrc={fullSrc} alt={alt} />
         ) : (
-          <DesktopHoverZoom src={src} alt={alt} />
+          <DesktopHoverZoom src={displaySrc} alt={alt} />
         )}
       </div>
       <style>{piz_styles}</style>
@@ -106,7 +114,7 @@ function DesktopHoverZoom({ src, alt }) {
 
 /* ---------------- Mobile: tap to open lightbox with pinch zoom ---------------- */
 
-function MobileZoomTrigger({ src, alt }) {
+function MobileZoomTrigger({ src, fullSrc, alt }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -123,7 +131,7 @@ function MobileZoomTrigger({ src, alt }) {
       </button>
 
       {open && (
-        <PinchLightbox src={src} alt={alt} onClose={() => setOpen(false)} />
+        <PinchLightbox src={fullSrc} alt={alt} onClose={() => setOpen(false)} />
       )}
     </>
   );

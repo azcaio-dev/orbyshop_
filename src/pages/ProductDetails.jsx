@@ -11,6 +11,7 @@ import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 import LoadingScreen from '../components/LoadingScreen'
 import ProductImageZoom from '../components/ProductImageZoom'
+import { otimizarImagem } from '../utils/otimizarImagem'
 
 function getSizesWithStock(product, variation) {
   const sizes = variation?.sizes || product.sizes || []
@@ -255,6 +256,7 @@ Pode me ajudar?`
       <main className="product-details fade-in">
         <section className="product-gallery">
           <div style={{ position: 'relative' }}>
+            {/* ProductImageZoom otimiza a imagem por dentro (1200px exibida, 2000px no lightbox) */}
             <ProductImageZoom src={selectedImage || productImages[0]} alt={product.name} />
             {product.productSection === 'outlet' && product.oldPrice && (
               <span className="discount-badge">
@@ -264,11 +266,11 @@ Pode me ajudar?`
           </div>
           <div className="thumbs">
             {productImages.map((image, index) => (
-              <img key={index} src={image} alt={product.name} loading="lazy"
+              <img key={index} src={otimizarImagem(image, 400)} alt={product.name} loading="lazy"
                 onClick={() => { setSelectedImage(image); setSelectedVariation(null); setSelectedSize('') }} />
             ))}
             {product.variations?.map((variation, index) => (
-              <img key={index} src={variation.image} alt={variation.colorName} loading="lazy"
+              <img key={index} src={otimizarImagem(variation.image, 400)} alt={variation.colorName} loading="lazy"
                 onClick={() => { setSelectedVariation(variation); setSelectedImage(variation.image); setSelectedSize('') }} />
             ))}
           </div>

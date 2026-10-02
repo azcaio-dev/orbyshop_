@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { getStoreSlugFromDomain } from '../config/customDomains'
+import { otimizarImagem } from '../utils/otimizarImagem'
 
 function fmt(value) {
   return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -63,7 +64,7 @@ function OrderSummary() {
         {order.items.map((item, i) => (
           <div key={i} className="order-item-card">
             {item.imageUrl && (
-              <img src={item.imageUrl} alt={item.name} className="order-item-image" loading="lazy" />
+              <img src={otimizarImagem(item.imageUrl, 400)} alt={item.name} className="order-item-image" loading="lazy" />
             )}
             <div className="order-item-info">
               <strong className="order-item-name">{item.name}</strong>

@@ -12,6 +12,7 @@ import SearchPanel from '../components/SearchPanel'
 import useStore from '../hooks/useStore'
 import useStoreTheme from '../hooks/useStoreTheme'
 import LoadingScreen from '../components/LoadingScreen'
+import { otimizarImagem } from '../utils/otimizarImagem'
 
 const sectionLabels = {
   launch: 'Lançamentos',
@@ -484,7 +485,7 @@ function Products() {
           </button>
         </div>
         <div className="header-center">
-          <img src={store.logo} alt={store.name} className="logo" onClick={() => navigate(storePrefix)} />
+          <img src={otimizarImagem(store.logo, 300)} alt={store.name} className="logo" onClick={() => navigate(storePrefix)} />
         </div>
         <div className="header-right">
           <button className="cart-button" onClick={() => setOpenCart(true)}>
@@ -586,7 +587,7 @@ function Products() {
                   onClick={() => navigate(`${storePrefix}/produto/${product.id}`)}
                 >
                   <div className="product-image-wrapper" style={{ position: 'relative' }}>
-                    <img src={product.images?.[0] || product.image} alt={product.name} className="product-image" loading="lazy" />
+                    <img src={otimizarImagem(product.images?.[0] || product.image, 400)} alt={product.name} className="product-image" loading="lazy" />
                     {!canAdd && <span className="unavailable-badge">Indisponível</span>}
                     {canAdd && isSoEncomendaActive(product) && (
                       <span className="sob-encomenda-badge">Sob encomenda</span>

@@ -288,7 +288,7 @@ const storePrefix = `/${storeSlug}`
 
         <div className="header-center">
           <img
-            src={store.logo}
+            src={otimizarImagem(store.logo, 300)}
             alt={store.name}
             className="logo"
             onClick={resetHome}
@@ -347,7 +347,7 @@ const storePrefix = `/${storeSlug}`
                     {banner.imageDesktop && (
                       <source
                         media="(min-width: 1024px)"
-                        srcSet={banner.imageDesktop}
+                        srcSet={otimizarImagem(banner.imageDesktop, 1920, true)}
                       />
                     )}
                     <img

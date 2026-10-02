@@ -4,6 +4,7 @@ import useStore from '../hooks/useStore'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { createOrderSnapshot } from '../services/orders'
+import { otimizarImagem } from '../utils/otimizarImagem'
 
 function CartDrawer({ open, onClose }) {
   const { store, loading: storeLoading, storeSlug } = useStore()
@@ -192,7 +193,7 @@ Pode me ajudar com o pagamento e entrega?`
               key={`${item.id}-${item.selectedSize || 'sem-tamanho'}-${item.selectedColor || 'sem-cor'}-${index}`}
               className="cart-item"
             >
-              <img src={item.image} alt={item.name} className="cart-item-image" loading="lazy" />
+              <img src={otimizarImagem(item.image, 400)} alt={item.name} className="cart-item-image" loading="lazy" />
               <div className="cart-info">
                 <strong className="cart-product-name">{item.name}</strong>
                 {item.soEncomenda && <span className="sob-encomenda-tag">📦 Sob encomenda</span>}
